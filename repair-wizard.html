@@ -210,6 +210,27 @@
             transition: filter 0.3s;
         }
 
+        .card-logo {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            margin-bottom: 16px;
+            filter: grayscale(100%);
+            transition: filter 0.3s;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .card:hover .card-logo,
+        .card.selected .card-logo {
+            filter: grayscale(0%);
+        }
+
+        .card-logo.hidden {
+            display: none;
+        }
+
         .card:hover .card-icon,
         .card.selected .card-icon {
             filter: grayscale(0%);
@@ -853,7 +874,10 @@
             grid.style.display = 'grid';
             grid.innerHTML = smartphoneBrands.map(brand => `
                 <div class="card" data-brand="${brand.id}">
-                    <div class="card-icon">${brand.icon}</div>
+                    <img class="card-logo" 
+                         src="logos/${brand.id}.png" 
+                         alt="${brand.name}" 
+                         onerror="this.classList.add('hidden')">
                     <div class="card-title">${brand.name}</div>
                 </div>
             `).join('');
@@ -899,7 +923,10 @@
             const models = smartphoneModels[brandId] || [];
             const modelCards = models.map(model => `
                 <div class="card" data-model="${model}">
-                    <div class="card-icon">${brand.icon}</div>
+                    <img class="card-logo" 
+                         src="logos/${brandId}.png" 
+                         alt="${brand.name}" 
+                         onerror="this.classList.add('hidden')">
                     <div class="card-title">${model}</div>
                 </div>
             `).join('');
