@@ -517,11 +517,11 @@
             <h1>What needs fixing?</h1>
             <p class="subtitle">Select one or more repair services you need</p>
             
-            <div class="grid" id="repairGrid"></div>
-
             <div class="selected-repairs-display">
                 <div class="selected-repairs-text empty" id="selectedRepairsText">No repairs selected yet</div>
             </div>
+
+            <div class="grid" id="repairGrid"></div>
 
             <div class="button-group">
                 <button class="btn-secondary" id="backToDevice">Back</button>
@@ -552,48 +552,48 @@
 
             <form id="quoteForm">
                 <div class="form-group">
-                    <label for="firstName">First Name</label>
+                    <label for="firstName">First Name *</label>
                     <input type="text" id="firstName" required placeholder="John">
                 </div>
 
                 <div class="form-group">
-                    <label for="lastName">Last Name</label>
+                    <label for="lastName">Last Name *</label>
                     <input type="text" id="lastName" required placeholder="Doe">
                 </div>
 
                 <div class="form-group">
-                    <label for="email">Email Address</label>
+                    <label for="email">Email Address *</label>
                     <input type="email" id="email" required placeholder="john@example.com">
                 </div>
 
                 <div class="form-group">
-                    <label for="phone">Phone Number</label>
+                    <label for="phone">Phone Number *</label>
                     <input type="tel" id="phone" required placeholder="+1 (555) 123-4567">
                 </div>
 
                 <div class="form-group">
-                    <label for="street">Street Name</label>
+                    <label for="street">Street Name *</label>
                     <input type="text" id="street" required placeholder="Main Street">
                 </div>
 
                 <div class="form-group">
-                    <label for="houseNumber">House Number</label>
+                    <label for="houseNumber">House Number *</label>
                     <input type="text" id="houseNumber" required placeholder="123">
                 </div>
 
                 <div class="form-group">
-                    <label for="postalCode">Postal Code</label>
+                    <label for="postalCode">Postal Code *</label>
                     <input type="text" id="postalCode" required placeholder="12345">
                 </div>
 
                 <div class="form-group">
-                    <label for="city">City</label>
+                    <label for="city">City *</label>
                     <input type="text" id="city" required placeholder="New York">
                 </div>
 
                 <div class="form-group">
-                    <label for="imei">IMEI Number</label>
-                    <input type="text" id="imei" required placeholder="123456789012345" pattern="[0-9]{15}" maxlength="15">
+                    <label for="imei">IMEI Number (Optional)</label>
+                    <input type="text" id="imei" placeholder="123456789012345" pattern="[0-9]{15}" maxlength="15">
                 </div>
 
                 <div class="form-group">
