@@ -94,3 +94,29 @@ Huawei,Nova 11,6.7,164.6,74.8,7.4,168,2023-04-17,Active,USB-C,No,2,No,N/A,4500,L
 Tecno,Phantom X2 Pro,6.8,164.6,72.7,9.0,201,2023-01-04,Active,USB-C,No,2,No,N/A,5160,Li-Po,Yes (45W),Low (Emerging markets)
 Infinix,Note 30 VIP,6.67,168.5,76.5,8.0,190,2023-05-16,Active,USB-C,No,2,Yes,2TB,5000,Li-Po,Yes (68W),Low
 Poco,M6 Pro,6.67,161.1,74.9,8.0,179,2024-01-11,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (67W),Medium
+Alcatel,3L (2021),6.52,165.7,75.9,8.9,190,2021-01-07,Active,USB-C,No,2,Yes,128GB,4000,Li-Po,Yes (10W),Low
+Alcatel,1S (2021),6.52,165.4,75.8,8.95,190,2021-01-07,Active,USB-C,No,2,Yes,128GB,4000,Li-Po,Yes (10W),Low
+Alcatel,3X (2020),6.52,164.9,75.8,8.4,186,2020-07-01,2021-07-01,USB-C,No,2,Yes,128GB,5000,Li-Po,Yes (10W),Low
+BlackBerry,KEY2,4.5,151.4,71.8,8.5,168,2018-06-07,2020-08-31,USB-C,No,2,Yes,256GB,3500,Li-Po,Yes (18W),Low (Discontinued brand)
+BlackBerry,KEY2 LE,4.5,150.3,71.8,8.4,156,2018-08-30,2020-08-31,USB-C,No,2,Yes,256GB,3000,Li-Po,Yes (18W),Low
+BlackBerry,Motion,5.5,155.5,75.5,8.1,167,2017-10-01,2019-10-01,USB-C,No,2,Yes,256GB,4000,Li-Po,Yes (18W),Low
+CAT,S75,6.58,172.0,79.0,12.5,268,2023-02-27,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (15W),Low (Rugged niche)
+CAT,S62 Pro,5.7,158.5,76.7,11.9,248,2020-02-01,Active,USB-C,No,2,Yes,256GB,4000,Li-Po,Yes (15W),Low
+CAT,S53,6.5,168.0,79.0,11.0,260,2022-11-01,Active,USB-C,No,2,Yes,256GB,5000,Li-Po,Yes (18W),Low
+Fairphone,5,6.46,161.6,75.8,9.6,212,2023-08-30,Active,USB-C,No,2,Yes,2TB,4200,Li-Ion,Yes (30W),Low (Sustainability niche)
+Fairphone,4,6.3,162.0,75.5,10.5,225,2021-09-30,Active,USB-C,No,2,Yes,256GB,3905,Li-Ion,Yes (20W),Low
+Fairphone,3+,5.65,158.0,71.8,9.9,189,2020-08-27,2023-08-30,USB-C,No,2,Yes,256GB,3040,Li-Ion,Yes (10W),Low
+HTC,U23 Pro,6.7,166.1,76.8,8.9,205,2023-05-18,Active,USB-C,No,2,Yes,1TB,4600,Li-Po,Yes (30W),Low
+HTC,Desire 22 Pro,6.6,166.3,76.9,9.4,205,2022-06-28,Active,USB-C,No,2,Yes,1TB,4520,Li-Po,Yes (18W),Low
+HTC,U20 5G,6.8,171.2,78.1,9.4,215,2020-06-16,2022-06-16,USB-C,No,2,Yes,256GB,5000,Li-Po,Yes (18W),Low
+HTC,U19e,6.0,156.2,75.9,8.5,180,2019-06-11,2021-06-11,USB-C,No,2,Yes,256GB,3930,Li-Po,Yes (18W),Low
+Lenovo,Legion Y90,6.92,177.0,78.5,10.1,252,2022-03-03,Active,USB-C,No,2,No,N/A,5600,Li-Po,Yes (68W),Low (Gaming niche)
+Lenovo,Legion Phone Duel 2,6.92,176.0,78.5,9.9,259,2021-04-08,Active,USB-C,No,2,No,N/A,5500,Li-Po,Yes (90W),Low
+Lenovo,K13 Note,6.5,164.4,76.2,8.9,192,2021-08-01,Active,USB-C,No,2,Yes,512GB,5000,Li-Po,Yes (18W),Low
+Lenovo,K12 Pro,6.8,172.3,78.4,9.1,203,2020-10-01,Active,USB-C,No,2,Yes,256GB,6000,Li-Po,Yes (20W),Low
+LG,Wing 5G,6.8,169.5,74.5,10.9,260,2020-10-01,2021-04-05,USB-C,No,2,Yes,2TB,4000,Li-Po,Yes (25W),Low (Brand discontinued)
+LG,Velvet 5G,6.8,167.2,74.1,7.9,180,2020-05-07,2021-04-05,USB-C,No,2,Yes,2TB,4300,Li-Po,Yes (25W),Low
+LG,V60 ThinQ 5G,6.8,169.9,77.6,8.9,218,2020-02-01,2021-04-05,USB-C,No,2,Yes,2TB,5000,Li-Po,Yes (25W),Low
+LG,G8X ThinQ,6.4,159.3,75.8,8.4,192,2019-10-01,2021-04-05,USB-C,No,2,Yes,2TB,4000,Li-Po,Yes (21W),Low
+Microsoft,Surface Duo 2,8.3,145.2,184.5,5.5,284,2021-10-21,2023-10-21,USB-C,No,1,No,N/A,4449,Li-Po,Yes (23W),Low (Discontinued)
+Microsoft,Surface Duo,8.1,145.2,186.9,4.8,250,2020-09-10,2022-09-10,USB-C,No,1,No,N/A,3577,Li-Po,Yes (18W),Low
