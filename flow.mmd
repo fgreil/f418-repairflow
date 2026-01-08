@@ -1,47 +1,37 @@
 flowchart LR
-    %% Pools / Lanes (logical representation)
-    Customer((Customer))
-    Staff[Repair Staff]
-    System[Shop System]
+    %% Customer lane
+    subgraph Customer
+        C1([Report issue])
+        C2{Approve estimate?}
+        C3([Receive unrepaired phone])
+        C4([Pick up repaired phone])
+    end
 
-    %% Start
-    Start([Customer reports issue])
+    %% Repair Staff lane
+    subgraph Repair_Staff["Repair Staff"]
+        R1[Receive phone & record details]
+        R2[Provide estimate]
+        R3[Diagnose device]
+        R4{Repair feasible?}
+        R5[Perform repair]
+        R6[Test device]
+        R7[Declare unrepairable]
+    end
 
-    %% Intake
-    Intake[Receive phone and record details]
-    Estimate[Provide repair estimate]
-    Approve{Customer approves estimate?}
+    %% System / Admin lane
+    subgraph System
+        S1[Generate invoice]
+        S2[Collect payment]
+    end
 
-    %% Decision paths
-    Reject[Return phone unrepaired]
-    Diagnose[Diagnose device]
+    %% Cross-lane flows
+    C1 --> R1 --> R2 --> C2
 
-    %% Repair path
-    Repair{Repair feasible?}
-    Fix[Perform repair]
-    Test[Test device]
+    C2 -- No --> C3
+    C2 -- Yes --> R3 --> R4
 
-    %% Outcomes
-    Success{Repair successful?}
-    Rework[Additional repair required]
-    Fail[Declare device unrepairable]
+    R4 -- No --> R7 --> C3
+    R4 -- Yes --> R5 --> R6
 
-    %% Payment & closure
-    Invoice[Generate invoice]
-    Payment[Collect payment]
-    Return[Return phone to customer]
-
-    %% Flow
-    Customer --> Start
-    Start --> Intake
-    Intake --> Estimate
-    Estimate --> Approve
-
-    Approve -- No --> Reject --> Return
-    Approve -- Yes --> Diagnose --> Repair
-
-    Repair -- No --> Fail --> Return
-    Repair -- Yes --> Fix --> Test --> Success
-
-    Success -- No --> Rework --> Fix
-    Success -- Yes --> Invoice --> Payment --> Return
+    R6 -- Fail --> R5
+    R6 -- Pass --> S1 --> S2 --> C4
