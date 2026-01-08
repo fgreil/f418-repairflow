@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions
+    xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+    xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+    id="Definitions_MobilePhoneRepair"
+    targetNamespace="http://example.com/mobilephonerepair">
+
+  <bpmn:process
+      id="MobilePhoneRepairProcess"
+      name="Mobile Phone Repair Process"
+      isExecutable="false">
+
+    <!-- Lanes -->
+    <bpmn:laneSet id="LaneSet_Main">
+      <bpmn:lane id="Lane_Customer" name="Customer">
+        <bpmn:flowNodeRef>StartEvent_IssueReported</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_EstimateApproved</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_DeviceReturned</bpmn:flowNodeRef>
+      </bpmn:lane>
+
+      <bpmn:lane id="Lane_RepairService" name="Repair Service">
+        <bpmn:flowNodeRef>Task_DeviceIntake</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_CreateEstimate</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_DiagnoseDevice</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_RepairFeasible</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PerformRepair</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_TestDevice</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_DeclareUnrepairable</bpmn:flowNodeRef>
+      </bpmn:lane>
+
+      <bpmn:lane id="Lane_System" name="System">
+        <bpmn:flowNodeRef>Task_GenerateInvoice</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ProcessPayment</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <!-- Events -->
+    <bpmn:startEvent
+        id="StartEvent_IssueReported"
+        name="Issue reported"/>
+
+    <bpmn:endEvent
+        id="EndEvent_DeviceReturned"
+        name="Device returned to customer"/>
+
+    <!-- Tasks -->
+    <bpmn:task
+        id="Task_DeviceIntake"
+        name="Receive device and record details"/>
+
+    <bpmn:task
+        id="Task_CreateEstimate"
+        name="Create repair estimate"/>
+
+    <bpmn:task
+        id="Task_DiagnoseDevice"
+        name="Diagnose device"/>
+
+    <bpmn:task
+        id="Task_PerformRepair"
+        name="Perform repair"/>
+
+    <bpmn:task
+        id="Task_TestDevice"
+        name="Test device"/>
+
+    <bpmn:task
+        id="Task_DeclareUnrepairable"
+        name="Declare device unrepairable"/>
+
+    <bpmn:task
+        id="Task_GenerateInvoice"
+        name="Generate invoice"/>
+
+    <bpmn:task
+        id="Task_ProcessPayment"
+        name="Process payment"/>
+
+    <!-- Gateways -->
+    <bpmn:exclusiveGateway
+        id="Gateway_EstimateApproved"
+        name="Estimate approved?"/>
+
+    <bpmn:exclusiveGateway
+        id="Gateway_RepairFeasible"
+        name="Repair feasible?"/>
+
+    <bpmn:exclusiveGateway
+        id="Gateway_TestSuccessful"
+        name="Test successful?"/>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow
+        id="Flow_Start_To_Intake"
+        sourceRef="StartEvent_IssueReported"
+        targetRef="Task_DeviceIntake"/>
+
+    <bpmn:sequenceFlow
+        id="Flow_Intake_To_Estimate"
+        sourceRef="Task_DeviceIntake"
+        targetRef="Task_CreateEstimate"/>
+
+    <bpmn:sequenceFlow
+        id="Flow_Estimate_To_Approval"
+        sourceRef="Task_CreateEstimate"
+        targetRef="Gateway_EstimateApproved"/>
+
+    <bpmn:sequenceFlow
+        id="Flow_Approval_Yes"
+        name="Yes"
+        sourceRef="Gateway_EstimateApproved"
+        targetRef="Task_DiagnoseDevice"/>
+
+    <bpmn:sequenceFlow
+        id="Flow_Approval_No"
+        name="No"
+        sourceRef="Gateway_EstimateApproved"
+        targetRef="EndEvent_DeviceReturned"/>
+
+    <bpmn:sequenceFlow
+        id="Flow_Diagnose_To_Feasibility"
+        sourceRef="Task_DiagnoseDevice"
+        targetRef="Gateway_RepairFeasible"/>
+
+    <bpmn:sequenceFlow
+        id="Flow_Feasible_Yes"
+        name="Yes"
+        sourceRef="Gateway_RepairFeasible"
+        targetRef="Task_PerformRepair"/>
+
+    <bpmn:sequenceFlow
+        id="Flow_Feasible_No"
+        name="No"
+        sourceRef="Gateway_RepairFeasible"
+        targetRef="Task_DeclareUnrepairable"/>
+
+    <bpmn:sequenceFlow
+        id="Flow_Unrepairable_To_End"
+        sourceRef="Task_DeclareUnrepairable"
+        targetRef="EndEvent_DeviceReturned"/>
+
+    <bpmn:sequenceFlow
+        id="Flow_Repair_To_Test"
+        sourceRef="Task_PerformRepair"
+        targetRef="Task_TestDevice"/>
+
+    <bpmn:sequenceFlow
+        id="Flow_Test_To_Gateway"
+        sourceRef="Task_TestDevice"
+        targetRef="Gateway_TestSuccessful"/>
+
+    <bpmn:sequenceFlow
+        id="Flow_Test_Failed"
+        name="Failed"
+        sourceRef="Gateway_TestSuccessful"
+        targetRef="Task_PerformRepair"/>
+
+    <bpmn:sequenceFlow
+        id="Flow_Test_Passed"
+        name="Passed"
+        sourceRef="Gateway_TestSuccessful"
+        targetRef="Task_GenerateInvoice"/>
+
+    <bpmn:sequenceFlow
+        id="Flow_Invoice_To_Payment"
+        sourceRef="Task_GenerateInvoice"
+        targetRef="Task_ProcessPayment"/>
+
+    <bpmn:sequenceFlow
+        id="Flow_Payment_To_End"
+        sourceRef="Task_ProcessPayment"
+        targetRef="EndEvent_DeviceReturned"/>
+
+  </bpmn:process>
+</bpmn:definitions>
