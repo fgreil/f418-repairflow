@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Repair Service</title>
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1d1d1f;
+            --secondary: #86868b;
+            --accent: #0071e3;
+            --border: #d2d2d7;
+            --bg: #fbfbfd;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--primary);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Progress Steps */
+        .progress-container {
+            padding: 60px 0 40px;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .progress-line {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--border);
+            z-index: 0;
+        }
+
+        .progress-line-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: var(--accent);
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 0;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--secondary);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 12px;
+        }
+
+        .step.active .step-circle {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .step.completed .step-circle {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .step-label {
+            font-size: 13px;
+            color: var(--secondary);
+            font-weight: 500;
+            text-align: center;
+            transition: color 0.3s;
+        }
+
+        .step.active .step-label {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 48px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .subtitle {
+            font-size: 21px;
+            color: var(--secondary);
+            text-align: center;
+            margin-bottom: 50px;
+            font-weight: 400;
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 32px 24px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0, 113, 227, 0.05), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+            border-color: var(--accent);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card.selected {
+            border-color: var(--accent);
+            border-width: 2px;
+            background: linear-gradient(135deg, rgba(0, 113, 227, 0.05), transparent);
+        }
+
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            filter: grayscale(100%);
+            transition: filter 0.3s;
+        }
+
+        .card:hover .card-icon,
+        .card.selected .card-icon {
+            filter: grayscale(0%);
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--primary);
+        }
+
+        .card-subtitle {
+            font-size: 14px;
+            color: var(--secondary);
+            font-weight: 400;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            background: var(--card-bg);
+            transition: all 0.2s;
+            color: var(--primary);
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Summary Card */
+        .summary-card {
+            background: linear-gradient(135deg, #f5f5f7 0%, #ffffff 100%);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 32px;
+            margin-bottom: 40px;
+        }
+
+        .summary-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            font-size: 15px;
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        .summary-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Selected Repairs Display */
+        .selected-repairs-display {
+            background: linear-gradient(135deg, rgba(0, 113, 227, 0.08), rgba(0, 113, 227, 0.02));
+            border: 1px solid rgba(0, 113, 227, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .selected-repairs-text {
+            font-size: 15px;
+            color: var(--primary);
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .selected-repairs-text.empty {
+            color: var(--secondary);
+            font-style: italic;
+        }
+
+        .repair-tag {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            margin: 4px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        button {
+            padding: 14px 32px;
+            border-radius: 980px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0077ed;
+            transform: scale(1.02);
+        }
+
+        .btn-primary:disabled {
+            background: var(--border);
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg);
+            border-color: var(--accent);
+        }
+
+        /* Success Message */
+        .success-message {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+            animation: scaleIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .success-title {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .success-text {
+            font-size: 19px;
+            color: var(--secondary);
+            margin-bottom: 40px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 32px;
+            }
+
+            .subtitle {
+                font-size: 17px;
+            }
+
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 12px;
+            }
+
+            .card {
+                padding: 24px 16px;
+            }
+
+            .card-icon {
+                font-size: 36px;
+            }
+
+            .card-title {
+                font-size: 15px;
+            }
+
+            .card-subtitle {
+                font-size: 12px;
+            }
+
+            .progress-steps {
+                padding: 0 10px;
+            }
+
+            .step-label {
+                font-size: 11px;
+            }
+
+            .step-circle {
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .summary-card {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="progress-container">
+            <div class="progress-steps">
+                <div class="progress-line">
+                    <div class="progress-line-fill" id="progressFill"></div>
+                </div>
+                <div class="step active" data-step="1">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">Select Device</div>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">Select Repair</div>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Get Quote</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Select Device -->
+        <div id="step1" class="content-section active">
+            <h1>Select your device</h1>
+            <p class="subtitle">Choose the device you need repaired</p>
+            
+            <div class="grid" id="deviceGrid"></div>
+            
+            <div id="modelGrid" class="grid" style="display: none;"></div>
+
+            <div class="button-group">
+                <button class="btn-primary" id="nextToRepair" disabled>Continue</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Select Repair -->
+        <div id="step2" class="content-section">
+            <h1>What needs fixing?</h1>
+            <p class="subtitle">Select one or more repair services you need</p>
+            
+            <div class="grid" id="repairGrid"></div>
+
+            <div class="selected-repairs-display">
+                <div class="selected-repairs-text empty" id="selectedRepairsText">No repairs selected yet</div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary" id="backToDevice">Back</button>
+                <button class="btn-primary" id="nextToQuote" disabled>Continue</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Get Quote -->
+        <div id="step3" class="content-section">
+            <h1>Get your quote</h1>
+            <p class="subtitle">We'll contact you with a detailed estimate</p>
+            
+            <div class="summary-card">
+                <div class="summary-title">Repair Summary</div>
+                <div class="summary-item">
+                    <span class="summary-label">Device</span>
+                    <span class="summary-value" id="summaryDevice">-</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Model</span>
+                    <span class="summary-value" id="summaryModel">-</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Repairs</span>
+                    <span class="summary-value" id="summaryRepair">-</span>
+                </div>
+            </div>
+
+            <form id="quoteForm">
+                <div class="form-group">
+                    <label for="firstName">First Name</label>
+                    <input type="text" id="firstName" required placeholder="John">
+                </div>
+
+                <div class="form-group">
+                    <label for="lastName">Last Name</label>
+                    <input type="text" id="lastName" required placeholder="Doe">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" required placeholder="john@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" required placeholder="+1 (555) 123-4567">
+                </div>
+
+                <div class="form-group">
+                    <label for="street">Street Name</label>
+                    <input type="text" id="street" required placeholder="Main Street">
+                </div>
+
+                <div class="form-group">
+                    <label for="houseNumber">House Number</label>
+                    <input type="text" id="houseNumber" required placeholder="123">
+                </div>
+
+                <div class="form-group">
+                    <label for="postalCode">Postal Code</label>
+                    <input type="text" id="postalCode" required placeholder="12345">
+                </div>
+
+                <div class="form-group">
+                    <label for="city">City</label>
+                    <input type="text" id="city" required placeholder="New York">
+                </div>
+
+                <div class="form-group">
+                    <label for="imei">IMEI Number</label>
+                    <input type="text" id="imei" required placeholder="123456789012345" pattern="[0-9]{15}" maxlength="15">
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Additional Notes (Optional)</label>
+                    <textarea id="notes" placeholder="Tell us more about the issue..."></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn-secondary" id="backToRepair">Back</button>
+                    <button type="submit" class="btn-primary">Submit Request</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Success Message -->
+        <div id="success" class="content-section">
+            <div class="success-message">
+                <div class="success-icon">✓</div>
+                <h2 class="success-title">Request Submitted!</h2>
+                <p class="success-text">We'll contact you shortly with a detailed quote and next steps.</p>
+                <button class="btn-primary" onclick="location.reload()">Start New Request</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock data (would come from backend)
+        const devices = [
+            { id: 'deviceA', name: 'Smartphones', icon: '📱', desc: 'Mobile phones' },
+            { id: 'deviceB', name: 'Laptops', icon: '💻', desc: 'Portable computers' },
+            { id: 'deviceC', name: 'Wearables', icon: '⌚', desc: 'Smart watches' }
+        ];
+
+        const models = {
+            deviceA: ['Model A1', 'Model A2', 'Model A3', 'Model A4'],
+            deviceB: ['Model B1', 'Model B2', 'Model B3', 'Model B4'],
+            deviceC: ['Model C1', 'Model C2', 'Model C3', 'Model C4']
+        };
+
+        const repairs = [
+            { id: 1, name: 'Screen Repair', icon: '🔧' },
+            { id: 2, name: 'Battery Replacement', icon: '🔋' },
+            { id: 3, name: 'Water Damage', icon: '💧' },
+            { id: 4, name: 'Camera Repair', icon: '📷' },
+            { id: 5, name: 'Charging Port', icon: '⚡' },
+            { id: 6, name: 'Speaker Repair', icon: '🔊' },
+            { id: 7, name: 'Button Repair', icon: '🔘' },
+            { id: 8, name: 'Back Glass', icon: '🪟' },
+            { id: 9, name: 'Software Issue', icon: '💾' },
+            { id: 10, name: 'Data Recovery', icon: '💿' },
+            { id: 11, name: 'Microphone', icon: '🎤' },
+            { id: 12, name: 'Face ID Repair', icon: '👤' },
+            { id: 13, name: 'Motherboard', icon: '🖥️' },
+            { id: 14, name: 'Antenna Repair', icon: '📡' },
+            { id: 15, name: 'Vibration Motor', icon: '📳' },
+            { id: 16, name: 'Home Button', icon: '⏺️' },
+            { id: 17, name: 'SIM Card Tray', icon: '📇' },
+            { id: 18, name: 'WiFi/Bluetooth', icon: '📶' },
+            { id: 19, name: 'Touch ID', icon: '👆' },
+            { id: 20, name: 'General Checkup', icon: '🔍' }
+        ];
+
+        // State
+        let selectedDevice = null;
+        let selectedModel = null;
+        let selectedRepairs = [];
+
+        // Initialize
+        function init() {
+            renderDevices();
+            renderRepairs();
+            setupEventListeners();
+        }
+
+        function renderDevices() {
+            const grid = document.getElementById('deviceGrid');
+            grid.innerHTML = devices.map(device => `
+                <div class="card" data-device="${device.id}">
+                    <div class="card-icon">${device.icon}</div>
+                    <div class="card-title">${device.name}</div>
+                    <div class="card-subtitle">${device.desc}</div>
+                </div>
+            `).join('');
+
+            grid.querySelectorAll('.card').forEach(card => {
+                card.addEventListener('click', () => selectDevice(card.dataset.device));
+            });
+        }
+
+        function selectDevice(deviceId) {
+            selectedDevice = deviceId;
+            selectedModel = null;
+
+            document.querySelectorAll('#deviceGrid .card').forEach(c => c.classList.remove('selected'));
+            document.querySelector(`[data-device="${deviceId}"]`).classList.add('selected');
+
+            renderModels(deviceId);
+            document.getElementById('nextToRepair').disabled = true;
+        }
+
+        function renderModels(deviceId) {
+            const device = devices.find(d => d.id === deviceId);
+            const grid = document.getElementById('modelGrid');
+            grid.style.display = 'grid';
+            grid.innerHTML = models[deviceId].map(model => `
+                <div class="card" data-model="${model}">
+                    <div class="card-icon">${device.icon}</div>
+                    <div class="card-title">${model}</div>
+                </div>
+            `).join('');
+
+            grid.querySelectorAll('.card').forEach(card => {
+                card.addEventListener('click', () => selectModel(card.dataset.model));
+            });
+        }
+
+        function selectModel(model) {
+            selectedModel = model;
+            document.querySelectorAll('#modelGrid .card').forEach(c => c.classList.remove('selected'));
+            document.querySelector(`[data-model="${model}"]`).classList.add('selected');
+            document.getElementById('nextToRepair').disabled = false;
+        }
+
+        function renderRepairs() {
+            const grid = document.getElementById('repairGrid');
+            grid.innerHTML = repairs.map(repair => `
+                <div class="card" data-repair="${repair.id}">
+                    <div class="card-icon">${repair.icon}</div>
+                    <div class="card-title">${repair.name}</div>
+                </div>
+            `).join('');
+
+            grid.querySelectorAll('.card').forEach(card => {
+                card.addEventListener('click', () => selectRepair(card.dataset.repair));
+            });
+        }
+
+        function selectRepair(repairId) {
+            const index = selectedRepairs.indexOf(repairId);
+            const card = document.querySelector(`[data-repair="${repairId}"]`);
+            
+            if (index > -1) {
+                // Deselect
+                selectedRepairs.splice(index, 1);
+                card.classList.remove('selected');
+            } else {
+                // Select
+                selectedRepairs.push(repairId);
+                card.classList.add('selected');
+            }
+            
+            updateSelectedRepairsDisplay();
+            document.getElementById('nextToQuote').disabled = selectedRepairs.length === 0;
+        }
+
+        function updateSelectedRepairsDisplay() {
+            const displayElement = document.getElementById('selectedRepairsText');
+            
+            if (selectedRepairs.length === 0) {
+                displayElement.innerHTML = 'No repairs selected yet';
+                displayElement.classList.add('empty');
+            } else {
+                const repairTags = selectedRepairs
+                    .map(id => {
+                        const repair = repairs.find(r => r.id == id);
+                        return `<span class="repair-tag">${repair.icon} ${repair.name}</span>`;
+                    })
+                    .join('');
+                displayElement.innerHTML = repairTags;
+                displayElement.classList.remove('empty');
+            }
+        }
+
+        function updateProgress(step) {
+            const steps = document.querySelectorAll('.step');
+            const progressFill = document.getElementById('progressFill');
+
+            steps.forEach(s => {
+                const stepNum = parseInt(s.dataset.step);
+                s.classList.remove('active', 'completed');
+                if (stepNum < step) s.classList.add('completed');
+                if (stepNum === step) s.classList.add('active');
+            });
+
+            const progress = ((step - 1) / 2) * 100;
+            progressFill.style.width = `${progress}%`;
+        }
+
+        function goToStep(step) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+            updateProgress(step);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateSummary() {
+            const device = devices.find(d => d.id === selectedDevice);
+            const repairList = selectedRepairs
+                .map(id => repairs.find(r => r.id == id).name)
+                .join(', ');
+            
+            document.getElementById('summaryDevice').textContent = device.name;
+            document.getElementById('summaryModel').textContent = selectedModel;
+            document.getElementById('summaryRepair').textContent = repairList;
+        }
+
+        function setupEventListeners() {
+            document.getElementById('nextToRepair').addEventListener('click', () => {
+                goToStep(2);
+            });
+
+            document.getElementById('backToDevice').addEventListener('click', () => {
+                goToStep(1);
+            });
+
+            document.getElementById('nextToQuote').addEventListener('click', () => {
+                updateSummary();
+                goToStep(3);
+            });
+
+            document.getElementById('backToRepair').addEventListener('click', () => {
+                goToStep(2);
+            });
+
+            document.getElementById('quoteForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                // Here you would send data to backend
+                const formData = {
+                    device: selectedDevice,
+                    model: selectedModel,
+                    repairs: selectedRepairs,
+                    firstName: document.getElementById('firstName').value,
+                    lastName: document.getElementById('lastName').value,
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value,
+                    street: document.getElementById('street').value,
+                    houseNumber: document.getElementById('houseNumber').value,
+                    postalCode: document.getElementById('postalCode').value,
+                    city: document.getElementById('city').value,
+                    imei: document.getElementById('imei').value,
+                    notes: document.getElementById('notes').value
+                };
+
+                console.log('Form submitted:', formData);
+
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                document.getElementById('success').classList.add('active');
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
