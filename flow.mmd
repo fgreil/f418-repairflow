@@ -1,37 +1,37 @@
 flowchart LR
-    %% Customer lane
-    subgraph Customer
-        C1([Report issue])
-        C2{Approve estimate?}
-        C3([Receive unrepaired phone])
-        C4([Pick up repaired phone])
+    %% Kunden-Lane
+    subgraph Kunde
+        C1([Problem melden])
+        C2{Kostenvoranschlag genehmigen?}
+        C3([Unrepariertes Gerät erhalten])
+        C4([Repariertes Gerät abholen])
     end
 
-    %% Repair Staff lane
-    subgraph Repair_Staff["Repair Staff"]
-        R1[Receive phone & record details]
-        R2[Provide estimate]
-        R3[Diagnose device]
-        R4{Repair feasible?}
-        R5[Perform repair]
-        R6[Test device]
-        R7[Declare unrepairable]
+    %% Werkstatt-Lane
+    subgraph Reparaturservice["Reparaturservice"]
+        R1[Gerät annehmen und Kunden-Daten erfassen]
+        R2[Kostenvoranschlag erstellen]
+        R3[Gerät diagnostizieren]
+        R4{Reparatur möglich?}
+        R5[Reparatur durchführen]
+        R6[Gerät testen]
+        R7[Gerät als nicht reparierbar erklären]
     end
 
-    %% System / Admin lane
+    %% System / Verwaltung
     subgraph System
-        S1[Generate invoice]
-        S2[Collect payment]
+        S1[Rechnung erstellen]
+        S2[Zahlung entgegennehmen]
     end
 
-    %% Cross-lane flows
+    %% Ablauf über Lanes hinweg
     C1 --> R1 --> R2 --> C2
 
-    C2 -- No --> C3
-    C2 -- Yes --> R3 --> R4
+    C2 -- Nein --> C3
+    C2 -- Ja --> R3 --> R4
 
-    R4 -- No --> R7 --> C3
-    R4 -- Yes --> R5 --> R6
+    R4 -- Nein --> R7 --> C3
+    R4 -- Ja --> R5 --> R6
 
-    R6 -- Fail --> R5
-    R6 -- Pass --> S1 --> S2 --> C4
+    R6 -- Fehlgeschlagen --> R5
+    R6 -- Erfolgreich --> S1 --> S2 --> C4
