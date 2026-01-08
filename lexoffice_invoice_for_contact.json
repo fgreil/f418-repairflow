@@ -1,0 +1,72 @@
+{
+  "_comment_file": "=== LEXOFFICE API - CREATE INVOICE WITH EXISTING CONTACT ===",
+  "_comment_purpose": "Creates a finalized invoice referencing an existing contact (customer must be created first)",
+  
+  "description": "Lexoffice API Query - Invoice with Contact Reference",
+  "endpoint": "POST https://api.lexware.io/v1/invoices?finalize=true",
+  
+  "headers": {
+    "Authorization": "Bearer {accessToken}",
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  },
+  
+  "body": {
+    "voucherDate": "2026-01-08T00:00:00.000+01:00",
+    
+    "_comment_address_with_contact": "SIMPLIFIED: Only contactId is required when referencing an existing contact",
+    "address": {
+      "contactId": "e9066f04-8cc7-4616-93f8-ac9ecc8479c8",
+      "_comment_contactId": "Replace with the UUID returned from the contact creation API call",
+      "_comment_auto_filled": "Name, street, zip, city, countryCode, and email are automatically loaded from the contact",
+      "_comment_override_optional": "You CAN still override address fields for this specific invoice if needed (e.g., different shipping address)"
+    },
+    
+    "lineItems": [
+      {
+        "type": "service",
+        "name": "Arbeitszeit Display-Reparatur",
+        "quantity": 1.5,
+        "unitName": "Stunden",
+        "unitPrice": {
+          "currency": "EUR",
+          "netAmount": 50.00,
+          "taxRatePercentage": 19
+        }
+      },
+      {
+        "type": "material",
+        "name": "Display iPhone 13",
+        "quantity": 1,
+        "unitName": "Stück",
+        "unitPrice": {
+          "currency": "EUR",
+          "netAmount": 120.00,
+          "taxRatePercentage": 19
+        }
+      }
+    ],
+    
+    "totalPrice": {
+      "currency": "EUR"
+    },
+    
+    "taxConditions": {
+      "taxType": "net"
+    },
+    
+    "paymentConditions": {
+      "paymentTermLabel": "10 Tage - 3 %, 30 Tage netto",
+      "paymentTermDuration": 30
+    }
+  },
+  
+  "notes": {
+    "main_difference": "KEY CHANGE: Only 'contactId' is needed in the address object (instead of name, street, zip, city, countryCode)",
+    "automatic_data": "Lexoffice automatically fills: customer name, billing address, email, phone from the contact",
+    "contact_id_source": "Get the contactId from the response of POST /v1/contacts (field: 'id')",
+    "workflow": "1) Create contact → 2) Copy returned 'id' → 3) Use as 'contactId' in invoice",
+    "override_example": "To use a different address for this invoice: { \"contactId\": \"...\", \"street\": \"Other Street 1\", \"city\": \"Other City\", ... }",
+    "calculation": "€195 net + 19% VAT (€37.05) = €232.05 gross"
+  }
+}
