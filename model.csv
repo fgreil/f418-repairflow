@@ -1,21 +1,96 @@
-Brand,Model,Screen Size,Height (mm),Width (mm),Depth (mm),Weight (g),Release Date,USB Type,Lightning,SIM Slots,SD Slot,Max SD Size,Battery Capacity (mAh),Battery Type,Fast Charging
-Apple,iPhone 15 Pro Max,6.7",159.9,76.7,8.25,221,2023-09-22,USB-C,No,2,No,N/A,4422,Li-Ion,Yes (27W)
-Apple,iPhone 14,6.1",146.7,71.5,7.8,172,2022-09-16,Lightning,Yes,2,No,N/A,3279,Li-Ion,Yes (20W)
-Samsung,Galaxy S24 Ultra,6.8",162.3,79.0,8.6,232,2024-01-24,USB-C,No,2,No,N/A,5000,Li-Ion,Yes (45W)
-Samsung,Galaxy S23,6.1",146.3,70.9,7.6,168,2023-02-17,USB-C,No,2,No,N/A,3900,Li-Ion,Yes (25W)
-Samsung,Galaxy A54 5G,6.4",158.2,76.7,8.2,202,2023-03-24,USB-C,No,2,Yes,1TB,5000,Li-Ion,Yes (25W)
-Google,Pixel 8 Pro,6.7",162.6,76.5,8.8,213,2023-10-12,USB-C,No,2,No,N/A,5050,Li-Ion,Yes (30W)
-Google,Pixel 7a,6.1",152.0,72.9,9.0,193,2023-05-10,USB-C,No,2,No,N/A,4385,Li-Ion,Yes (18W)
-Xiaomi,14 Pro,6.73",161.4,74.6,8.49,223,2024-02-25,USB-C,No,2,No,N/A,4880,Li-Po,Yes (120W)
-Xiaomi,Redmi Note 13 Pro,6.67",161.2,74.2,8.0,187,2023-09-21,USB-C,No,2,Yes,1TB,5100,Li-Po,Yes (67W)
-OnePlus,12,6.82",164.3,75.8,9.15,220,2024-01-23,USB-C,No,2,No,N/A,5400,Li-Po,Yes (100W)
-OnePlus,Nord 3,6.74",162.6,75.1,8.2,195,2023-07-05,USB-C,No,2,No,N/A,5000,Li-Po,Yes (80W)
-Motorola,Edge 40 Pro,6.67",161.2,74.0,8.6,199,2023-04-04,USB-C,No,2,No,N/A,4600,Li-Po,Yes (125W)
-Sony,Xperia 1 V,6.5",165.0,71.0,8.3,187,2023-06-16,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (30W)
-Oppo,Find X6 Pro,6.82",164.8,76.2,9.1,218,2023-03-21,USB-C,No,2,No,N/A,5000,Li-Po,Yes (100W)
-Vivo,X100 Pro,6.78",164.1,75.3,8.91,225,2023-11-13,USB-C,No,2,No,N/A,5400,Li-Po,Yes (100W)
-Realme,GT 5 Pro,6.78",161.7,75.1,9.2,218,2023-12-07,USB-C,No,2,No,N/A,5400,Li-Po,Yes (100W)
-Nokia,XR21,6.49",168.9,81.5,10.5,231,2023-05-09,USB-C,No,2,Yes,512GB,4800,Li-Po,Yes (33W)
-Asus,ROG Phone 7,6.78",173.0,77.0,10.3,239,2023-04-13,USB-C,No,2,No,N/A,6000,Li-Po,Yes (65W)
-Nothing,Phone (2),6.7",162.1,76.4,8.6,201,2023-07-11,USB-C,No,2,No,N/A,4700,Li-Po,Yes (45W)
-Honor,Magic 6 Pro,6.8",162.5,75.8,8.9,225,2024-01-11,USB-C,No,2,No,N/A,5600,Li-Po,Yes (80W)
+Brand,Model,Screen Size,Height (mm),Width (mm),Depth (mm),Weight (g),Release Date,Decommissioning Date,USB Type,Lightning,SIM Slots,SD Slot,Max SD Size,Battery Capacity (mAh),Battery Type,Fast Charging,Market Share / Popularity
+Apple,iPhone 15 Pro Max,6.7,159.9,76.7,8.25,221,2023-09-22,Active,USB-C,No,2,No,N/A,4422,Li-Ion,Yes (27W),High (Apple 18.8% global 2024)
+Apple,iPhone 15 Pro,6.1,146.6,70.6,8.25,187,2023-09-22,Active,USB-C,No,2,No,N/A,3274,Li-Ion,Yes (27W),High
+Apple,iPhone 15,6.1,147.6,71.6,7.8,171,2023-09-22,Active,USB-C,No,2,No,N/A,3349,Li-Ion,Yes (20W),High
+Apple,iPhone 15 Plus,6.7,160.9,77.8,7.8,201,2023-09-22,Active,USB-C,No,2,No,N/A,4383,Li-Ion,Yes (20W),Medium-High
+Apple,iPhone 14 Pro Max,6.7,160.7,77.6,7.85,240,2022-09-16,Active,Lightning,Yes,2,No,N/A,4323,Li-Ion,Yes (27W),High
+Apple,iPhone 14 Pro,6.1,147.5,71.5,7.85,206,2022-09-16,Active,Lightning,Yes,2,No,N/A,3200,Li-Ion,Yes (27W),High
+Apple,iPhone 14,6.1,146.7,71.5,7.8,172,2022-09-16,Active,Lightning,Yes,2,No,N/A,3279,Li-Ion,Yes (20W),High
+Apple,iPhone 14 Plus,6.7,160.8,78.1,7.8,203,2022-09-16,Active,Lightning,Yes,2,No,N/A,4325,Li-Ion,Yes (20W),Medium
+Apple,iPhone 13 Pro Max,6.7,160.8,78.1,7.65,238,2021-09-24,2023-09-12,Lightning,Yes,2,No,N/A,4352,Li-Ion,Yes (27W),Medium-High
+Apple,iPhone 13 Pro,6.1,146.7,71.5,7.65,203,2021-09-24,2023-09-12,Lightning,Yes,2,No,N/A,3095,Li-Ion,Yes (23W),Medium-High
+Apple,iPhone 13,6.1,146.7,71.5,7.65,173,2021-09-24,2024-09-09,Lightning,Yes,2,No,N/A,3227,Li-Ion,Yes (20W),Medium
+Apple,iPhone SE (3rd gen),4.7,138.4,67.3,7.3,144,2022-03-18,Active,Lightning,Yes,2,No,N/A,2018,Li-Ion,Yes (20W),Medium
+Samsung,Galaxy S24 Ultra,6.8,162.3,79.0,8.6,232,2024-01-24,Active,USB-C,No,2,No,N/A,5000,Li-Ion,Yes (45W),High (Samsung 18.1% global 2024)
+Samsung,Galaxy S24+,6.7,158.5,75.9,7.7,196,2024-01-24,Active,USB-C,No,2,No,N/A,4900,Li-Ion,Yes (45W),High
+Samsung,Galaxy S24,6.2,147.0,70.6,7.6,167,2024-01-24,Active,USB-C,No,2,No,N/A,4000,Li-Ion,Yes (25W),High
+Samsung,Galaxy S23 Ultra,6.8,163.4,78.1,8.9,233,2023-02-17,Active,USB-C,No,2,No,N/A,5000,Li-Ion,Yes (45W),High
+Samsung,Galaxy S23+,6.6,157.8,76.2,7.6,195,2023-02-17,Active,USB-C,No,2,No,N/A,4700,Li-Ion,Yes (45W),Medium-High
+Samsung,Galaxy S23,6.1,146.3,70.9,7.6,168,2023-02-17,Active,USB-C,No,2,No,N/A,3900,Li-Ion,Yes (25W),High
+Samsung,Galaxy S23 FE,6.4,158.0,76.5,8.2,209,2023-10-26,Active,USB-C,No,2,No,N/A,4500,Li-Ion,Yes (25W),Medium
+Samsung,Galaxy Z Fold5,7.6,154.9,129.9,6.1,253,2023-08-11,Active,USB-C,No,2,No,N/A,4400,Li-Po,Yes (25W),Medium-High
+Samsung,Galaxy Z Flip5,6.7,165.1,71.9,6.9,187,2023-08-11,Active,USB-C,No,2,No,N/A,3700,Li-Po,Yes (25W),Medium
+Samsung,Galaxy A54 5G,6.4,158.2,76.7,8.2,202,2023-03-24,Active,USB-C,No,2,Yes,1TB,5000,Li-Ion,Yes (25W),High
+Samsung,Galaxy A34 5G,6.6,161.3,78.1,8.2,199,2023-03-24,Active,USB-C,No,2,Yes,1TB,5000,Li-Ion,Yes (25W),Medium
+Samsung,Galaxy A14 5G,6.6,167.7,78.0,9.1,202,2023-01-04,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (15W),High
+Samsung,Galaxy A24,6.5,162.1,77.6,8.3,195,2023-04-13,Active,USB-C,No,2,Yes,1TB,5000,Li-Ion,Yes (25W),Medium
+Google,Pixel 8 Pro,6.7,162.6,76.5,8.8,213,2023-10-12,Active,USB-C,No,2,No,N/A,5050,Li-Ion,Yes (30W),Medium (Google ~3-4% global)
+Google,Pixel 8,6.2,150.5,70.8,8.9,187,2023-10-12,Active,USB-C,No,2,No,N/A,4575,Li-Ion,Yes (27W),Medium
+Google,Pixel 8a,6.1,152.1,72.7,8.9,188,2024-05-14,Active,USB-C,No,2,No,N/A,4492,Li-Ion,Yes (18W),Medium
+Google,Pixel 7a,6.1,152.0,72.9,9.0,193,2023-05-10,Active,USB-C,No,2,No,N/A,4385,Li-Ion,Yes (18W),Medium
+Google,Pixel 7 Pro,6.7,162.9,76.6,8.9,212,2022-10-13,2024-05-07,USB-C,No,2,No,N/A,5000,Li-Ion,Yes (30W),Medium
+Google,Pixel 7,6.3,155.6,73.2,8.7,197,2022-10-13,2024-05-07,USB-C,No,2,No,N/A,4355,Li-Ion,Yes (30W),Medium
+Google,Pixel 6a,6.1,152.2,71.8,8.9,178,2022-07-28,2023-05-10,USB-C,No,2,No,N/A,4410,Li-Ion,Yes (18W),Medium
+Xiaomi,14 Ultra,6.73,161.4,75.4,9.2,219,2024-02-25,Active,USB-C,No,2,No,N/A,5000,Li-Po,Yes (90W),Medium-High (Xiaomi 14% global 2024)
+Xiaomi,14 Pro,6.73,161.4,74.6,8.49,223,2024-02-25,Active,USB-C,No,2,No,N/A,4880,Li-Po,Yes (120W),Medium-High
+Xiaomi,14,6.36,152.8,71.5,8.2,193,2024-02-25,Active,USB-C,No,2,No,N/A,4610,Li-Po,Yes (90W),Medium
+Xiaomi,13T Pro,6.67,162.2,75.7,8.6,200,2023-09-26,Active,USB-C,No,2,No,N/A,5000,Li-Po,Yes (120W),Medium
+Xiaomi,13T,6.67,162.2,75.7,8.6,197,2023-09-26,Active,USB-C,No,2,No,N/A,5000,Li-Po,Yes (67W),Medium
+Xiaomi,Redmi Note 13 Pro+,6.67,161.4,74.2,8.9,204,2023-09-21,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (120W),High
+Xiaomi,Redmi Note 13 Pro,6.67,161.2,74.2,8.0,187,2023-09-21,Active,USB-C,No,2,Yes,1TB,5100,Li-Po,Yes (67W),High
+Xiaomi,Redmi Note 13,6.67,162.2,75.6,8.0,188,2023-09-21,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (33W),High
+Xiaomi,Redmi 13C,6.74,168.0,78.0,8.09,192,2023-12-06,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (18W),High
+Xiaomi,Poco X6 Pro,6.67,160.5,74.3,8.2,186,2024-01-11,Active,USB-C,No,2,No,N/A,5000,Li-Po,Yes (67W),Medium
+Xiaomi,Poco F5,6.67,161.1,74.9,7.9,181,2023-05-09,Active,USB-C,No,2,No,N/A,5000,Li-Po,Yes (67W),Medium
+OnePlus,12,6.82,164.3,75.8,9.15,220,2024-01-23,Active,USB-C,No,2,No,N/A,5400,Li-Po,Yes (100W),Medium
+OnePlus,12R,6.78,163.3,75.3,8.8,207,2024-01-23,Active,USB-C,No,2,No,N/A,5500,Li-Po,Yes (100W),Medium
+OnePlus,11,6.7,163.1,74.1,8.5,205,2023-02-07,Active,USB-C,No,2,No,N/A,5000,Li-Po,Yes (100W),Medium
+OnePlus,Nord 3,6.74,162.6,75.1,8.2,195,2023-07-05,Active,USB-C,No,2,No,N/A,5000,Li-Po,Yes (80W),Medium
+OnePlus,Nord CE 3,6.7,162.7,75.5,8.2,184,2023-07-06,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (80W),Medium
+OnePlus,Nord N30,6.72,165.5,76.0,8.3,195,2023-06-08,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (50W),Medium
+Oppo,Find X6 Pro,6.82,164.8,76.2,9.1,218,2023-03-21,Active,USB-C,No,2,No,N/A,5000,Li-Po,Yes (100W),Medium (Oppo ~9% global 2024)
+Oppo,Find X5 Pro,6.7,163.7,73.9,8.5,218,2022-03-03,2024-03-21,USB-C,No,2,No,N/A,5000,Li-Po,Yes (80W),Medium
+Oppo,Reno 11 Pro,6.74,161.5,74.7,8.2,190,2024-01-11,Active,USB-C,No,2,No,N/A,4700,Li-Po,Yes (80W),Medium
+Oppo,Reno 10 Pro+,6.74,162.9,74.2,8.3,194,2023-05-24,Active,USB-C,No,2,No,N/A,4700,Li-Po,Yes (100W),Medium
+Oppo,A78 5G,6.56,163.8,75.1,7.99,188,2023-01-06,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (33W),Medium
+Oppo,A58,6.72,165.7,76.0,8.0,192,2023-08-01,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (33W),Medium
+Vivo,X100 Pro,6.78,164.1,75.3,8.91,225,2023-11-13,Active,USB-C,No,2,No,N/A,5400,Li-Po,Yes (100W),Medium (Vivo ~9% global 2024)
+Vivo,X90 Pro,6.78,164.1,74.5,9.3,214,2022-11-22,Active,USB-C,No,2,No,N/A,4870,Li-Po,Yes (120W),Medium
+Vivo,V29 Pro,6.78,164.2,74.4,7.5,186,2023-10-04,Active,USB-C,No,2,No,N/A,4600,Li-Po,Yes (80W),Medium
+Vivo,V27 Pro,6.78,164.1,74.8,7.4,182,2023-03-01,Active,USB-C,No,2,No,N/A,4600,Li-Po,Yes (66W),Medium
+Vivo,Y36 5G,6.64,164.1,75.8,8.4,202,2023-10-02,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (44W),Medium
+Vivo,Y27,6.64,164.6,76.0,8.1,190,2023-09-12,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (44W),Medium
+Motorola,Edge 40 Pro,6.67,161.2,74.0,8.6,199,2023-04-04,Active,USB-C,No,2,No,N/A,4600,Li-Po,Yes (125W),Low-Medium
+Motorola,Edge 40,6.55,158.4,71.9,7.5,171,2023-05-04,Active,USB-C,No,2,No,N/A,4400,Li-Po,Yes (68W),Low-Medium
+Motorola,Edge 30 Ultra,6.67,161.8,73.5,8.4,198,2022-09-08,2024-04-04,USB-C,No,2,No,N/A,4610,Li-Po,Yes (125W),Low-Medium
+Motorola,Moto G84,6.55,159.5,74.0,7.6,167,2023-09-01,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (30W),Medium
+Motorola,Moto G73,6.5,161.4,73.8,8.3,181,2023-03-10,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (30W),Medium
+Sony,Xperia 1 V,6.5,165.0,71.0,8.3,187,2023-06-16,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (30W),Low
+Sony,Xperia 5 V,6.1,154.0,68.0,8.6,182,2023-10-13,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (30W),Low
+Sony,Xperia 10 V,6.1,155.0,68.0,8.3,159,2023-05-11,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (30W),Low
+Sony,Xperia 1 IV,6.5,165.0,71.0,8.2,185,2022-06-10,2023-06-16,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (30W),Low
+Realme,GT 5 Pro,6.78,161.7,75.1,9.2,218,2023-12-07,Active,USB-C,No,2,No,N/A,5400,Li-Po,Yes (100W),Medium
+Realme,GT Neo 5,6.74,163.9,75.8,8.9,199,2023-02-09,Active,USB-C,No,2,No,N/A,5000,Li-Po,Yes (150W),Medium
+Realme,11 Pro+,6.7,161.6,73.9,8.2,183,2023-06-08,Active,USB-C,No,2,No,N/A,5000,Li-Po,Yes (100W),Medium
+Realme,C55,6.72,165.6,75.9,7.9,189,2023-03-06,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (33W),High
+Realme,Narzo 60 Pro,6.7,161.2,74.0,8.2,191,2023-07-06,Active,USB-C,No,2,No,N/A,5000,Li-Po,Yes (100W),Medium
+Nokia,XR21,6.49,168.9,81.5,10.5,231,2023-05-09,Active,USB-C,No,2,Yes,512GB,4800,Li-Po,Yes (33W),Low
+Nokia,G60 5G,6.58,166.0,75.9,8.6,190,2022-09-01,Active,USB-C,No,2,Yes,512GB,4500,Li-Po,Yes (20W),Low
+Nokia,X30 5G,6.43,158.9,73.9,8.0,185,2022-09-01,Active,USB-C,No,2,Yes,1TB,4200,Li-Po,Yes (33W),Low
+Asus,ROG Phone 7,6.78,173.0,77.0,10.3,239,2023-04-13,Active,USB-C,No,2,No,N/A,6000,Li-Po,Yes (65W),Low (Gaming niche)
+Asus,ROG Phone 6,6.78,173.0,77.0,10.4,239,2022-07-05,2023-04-13,USB-C,No,2,No,N/A,6000,Li-Po,Yes (65W),Low
+Asus,Zenfone 10,5.9,146.5,68.1,9.4,172,2023-06-29,Active,USB-C,No,2,No,N/A,4300,Li-Po,Yes (30W),Low
+Asus,Zenfone 9,5.9,146.5,68.1,9.1,169,2022-07-28,2023-06-29,USB-C,No,2,No,N/A,4300,Li-Po,Yes (30W),Low
+Nothing,Phone (2),6.7,162.1,76.4,8.6,201,2023-07-11,Active,USB-C,No,2,No,N/A,4700,Li-Po,Yes (45W),Low-Medium
+Nothing,Phone (2a),6.7,161.7,76.3,8.6,190,2024-03-05,Active,USB-C,No,2,No,N/A,5000,Li-Po,Yes (45W),Low-Medium
+Nothing,Phone (1),6.55,159.2,75.8,8.3,193,2022-07-21,Active,USB-C,No,2,No,N/A,4500,Li-Po,Yes (45W),Low-Medium
+Honor,Magic 6 Pro,6.8,162.5,75.8,8.9,225,2024-01-11,Active,USB-C,No,2,No,N/A,5600,Li-Po,Yes (80W),Medium
+Honor,Magic 5 Pro,6.81,162.9,76.7,8.8,219,2023-02-27,Active,USB-C,No,2,No,N/A,5100,Li-Po,Yes (66W),Medium
+Honor,90,6.7,161.9,74.1,7.8,183,2023-05-29,Active,USB-C,No,2,No,N/A,5000,Li-Po,Yes (66W),Medium
+Honor,X9a,6.67,161.6,73.9,7.9,175,2023-01-04,Active,USB-C,No,2,No,N/A,5100,Li-Po,Yes (40W),Medium
+Huawei,P60 Pro,6.67,161.0,74.5,8.3,200,2023-03-23,Active,USB-C,No,2,No,N/A,4815,Li-Po,Yes (88W),Low (Limited outside China)
+Huawei,Mate 60 Pro,6.82,163.7,79.0,8.1,225,2023-08-29,Active,USB-C,No,2,No,N/A,5000,Li-Po,Yes (88W),Low
+Huawei,Nova 11,6.7,164.6,74.8,7.4,168,2023-04-17,Active,USB-C,No,2,No,N/A,4500,Li-Po,Yes (100W),Low
+Tecno,Phantom X2 Pro,6.8,164.6,72.7,9.0,201,2023-01-04,Active,USB-C,No,2,No,N/A,5160,Li-Po,Yes (45W),Low (Emerging markets)
+Infinix,Note 30 VIP,6.67,168.5,76.5,8.0,190,2023-05-16,Active,USB-C,No,2,Yes,2TB,5000,Li-Po,Yes (68W),Low
+Poco,M6 Pro,6.67,161.1,74.9,8.0,179,2024-01-11,Active,USB-C,No,2,Yes,1TB,5000,Li-Po,Yes (67W),Medium
