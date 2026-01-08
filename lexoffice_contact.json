@@ -1,0 +1,86 @@
+{
+  "_comment_file": "=== LEXOFFICE API - CREATE CUSTOMER CONTACT ===",
+  "_comment_purpose": "Creates a new customer contact with email and phone number that can be referenced in invoices",
+  
+  "description": "Lexoffice API Query - Create New Customer Contact",
+  "endpoint": "POST https://api.lexware.io/v1/contacts",
+  
+  "headers": {
+    "Authorization": "Bearer {accessToken}",
+    "_comment_auth": "Replace {accessToken} with your API key from https://app.lexware.de/addons/public-api",
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  },
+  
+  "body": {
+    "_comment_version": "Always set to 0 when creating a new contact",
+    "version": 0,
+    
+    "_comment_roles": "Contact must have at least one role: 'customer' and/or 'vendor'",
+    "roles": {
+      "customer": {},
+      "_comment_customer": "Empty object assigns customer role. Lexoffice auto-generates a customer number",
+      "_comment_vendor_optional": "To also make this contact a vendor, add: \"vendor\": {}"
+    },
+    
+    "_comment_person_vs_company": "Use 'person' object for individuals OR 'company' object for businesses (not both)",
+    "person": {
+      "salutation": "Herr",
+      "_comment_salutation": "Optional. Common values: 'Herr', 'Frau', 'Divers' (max 25 characters)",
+      "firstName": "Max",
+      "_comment_firstName": "Optional for person contacts",
+      "lastName": "Mustermann",
+      "_comment_lastName": "REQUIRED for person contacts"
+    },
+    
+    "_comment_company_alternative": "For company contacts, replace 'person' with: { \"company\": { \"name\": \"Company Name\", \"taxNumber\": \"12345/12345\", \"vatRegistrationId\": \"DE123456789\" } }",
+    
+    "_comment_addresses": "Billing and shipping addresses - max 1 of each when creating via API",
+    "addresses": {
+      "billing": [
+        {
+          "street": "Beispielstraße 123",
+          "_comment_street": "Street name and number combined",
+          "zip": "12345",
+          "city": "Berlin",
+          "countryCode": "DE",
+          "_comment_countryCode": "REQUIRED. ISO 3166 alpha2 (e.g., DE, AT, CH, FR)",
+          "_comment_supplement": "Optional field for additional address info: \"supplement\": \"3. OG\""
+        }
+      ],
+      "_comment_shipping_optional": "Optional: Add shipping address with same structure as billing"
+    },
+    
+    "_comment_emailAddresses": "Email addresses categorized by type - max 1 per category when creating via API",
+    "emailAddresses": {
+      "business": [
+        "max.mustermann@example.de"
+      ],
+      "_comment_business": "Business email address",
+      "_comment_other_types": "Other available types: 'office', 'private', 'other' (each as array with one email)"
+    },
+    
+    "_comment_phoneNumbers": "Phone numbers categorized by type - max 1 per category when creating via API",
+    "phoneNumbers": {
+      "mobile": [
+        "0171 1234567"
+      ],
+      "_comment_mobile": "Mobile phone number",
+      "_comment_other_types": "Other available types: 'business', 'office', 'private', 'fax', 'other' (each as array with one number)"
+    },
+    
+    "_comment_note": "Optional internal note about the contact (max 1000 characters)",
+    "note": "Kunde für Display-Reparatur"
+  },
+  
+  "notes": {
+    "workflow": "STEP 1: Create contact → Receive contact ID (UUID) in response",
+    "step2": "STEP 2: Use the returned contact ID in invoice: { \"address\": { \"contactId\": \"<uuid-from-response>\" } }",
+    "benefit": "When referencing a contact in an invoice, email/phone/address are automatically loaded",
+    "response_example": "API returns: { \"id\": \"e9066f04-...\", \"resourceUri\": \"https://api.lexware.io/v1/contacts/...\", \"createdDate\": \"...\", \"version\": 1 }",
+    "customer_number": "Lexoffice automatically assigns a customer number (e.g., 10307) which is read-only",
+    "required_fields_person": "For person contacts: version=0, roles (customer or vendor), person.lastName, addresses.billing[0].countryCode",
+    "required_fields_company": "For company contacts: version=0, roles (customer or vendor), company.name, addresses.billing[0].countryCode",
+    "update_contact": "To update: Use PUT /v1/contacts/{id} with incremented version number"
+  }
+}
