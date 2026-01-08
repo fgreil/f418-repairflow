@@ -505,7 +505,19 @@
             
             <div class="grid" id="deviceGrid"></div>
             
+            <!-- For Smartphones: Brand Selection -->
+            <div id="brandGrid" class="grid" style="display: none;"></div>
+            
+            <!-- For Smartphones: Model Selection -->
             <div id="modelGrid" class="grid" style="display: none;"></div>
+
+            <!-- For Non-Smartphones: Text Input -->
+            <div id="deviceTextInput" style="display: none; margin-bottom: 40px;">
+                <div class="form-group">
+                    <label for="deviceText">Please specify your device</label>
+                    <input type="text" id="deviceText" placeholder="e.g., MacBook Pro 2021, Apple Watch Series 8">
+                </div>
+            </div>
 
             <div class="button-group">
                 <button class="btn-primary" id="nextToRepair" disabled>Continue</button>
@@ -622,15 +634,139 @@
     <script>
         // Mock data (would come from backend)
         const devices = [
-            { id: 'deviceA', name: 'Smartphones', icon: '📱', desc: 'Mobile phones' },
-            { id: 'deviceB', name: 'Laptops', icon: '💻', desc: 'Portable computers' },
-            { id: 'deviceC', name: 'Wearables', icon: '⌚', desc: 'Smart watches' }
+            { id: 'smartphones', name: 'Smartphones', icon: '📱', desc: 'Mobile phones', hasModels: true },
+            { id: 'laptops', name: 'Laptops', icon: '💻', desc: 'Portable computers', hasModels: false },
+            { id: 'wearables', name: 'Wearables', icon: '⌚', desc: 'Smart watches', hasModels: false },
+            { id: 'other', name: 'Other', icon: '🔧', desc: 'Other devices', hasModels: false }
         ];
 
-        const models = {
-            deviceA: ['Model A1', 'Model A2', 'Model A3', 'Model A4'],
-            deviceB: ['Model B1', 'Model B2', 'Model B3', 'Model B4'],
-            deviceC: ['Model C1', 'Model C2', 'Model C3', 'Model C4']
+        // Smartphone brands extracted from CSV
+        const smartphoneBrands = [
+            { id: 'apple', name: 'Apple', icon: '🍎' },
+            { id: 'samsung', name: 'Samsung', icon: '📱' },
+            { id: 'google', name: 'Google', icon: '🔍' },
+            { id: 'xiaomi', name: 'Xiaomi', icon: '📱' },
+            { id: 'oneplus', name: 'OnePlus', icon: '1️⃣' },
+            { id: 'oppo', name: 'Oppo', icon: '📱' },
+            { id: 'vivo', name: 'Vivo', icon: '📱' },
+            { id: 'motorola', name: 'Motorola', icon: '📱' },
+            { id: 'sony', name: 'Sony', icon: '🎮' },
+            { id: 'realme', name: 'Realme', icon: '📱' },
+            { id: 'nokia', name: 'Nokia', icon: '📱' },
+            { id: 'asus', name: 'Asus', icon: '🎮' },
+            { id: 'nothing', name: 'Nothing', icon: '⚡' },
+            { id: 'honor', name: 'Honor', icon: '📱' },
+            { id: 'huawei', name: 'Huawei', icon: '📱' },
+            { id: 'tecno', name: 'Tecno', icon: '📱' },
+            { id: 'infinix', name: 'Infinix', icon: '📱' },
+            { id: 'poco', name: 'Poco', icon: '📱' },
+            { id: 'alcatel', name: 'Alcatel', icon: '📱' },
+            { id: 'blackberry', name: 'BlackBerry', icon: '⌨️' },
+            { id: 'cat', name: 'CAT', icon: '🏗️' },
+            { id: 'fairphone', name: 'Fairphone', icon: '♻️' },
+            { id: 'htc', name: 'HTC', icon: '📱' },
+            { id: 'lenovo', name: 'Lenovo', icon: '💻' },
+            { id: 'lg', name: 'LG', icon: '📱' },
+            { id: 'microsoft', name: 'Microsoft', icon: '🪟' }
+        ];
+
+        // Smartphone models by brand (from CSV)
+        const smartphoneModels = {
+            apple: [
+                'iPhone 15 Pro Max', 'iPhone 15 Pro', 'iPhone 15', 'iPhone 15 Plus',
+                'iPhone 14 Pro Max', 'iPhone 14 Pro', 'iPhone 14', 'iPhone 14 Plus',
+                'iPhone 13 Pro Max', 'iPhone 13 Pro', 'iPhone 13', 'iPhone SE (3rd gen)'
+            ],
+            samsung: [
+                'Galaxy S24 Ultra', 'Galaxy S24+', 'Galaxy S24',
+                'Galaxy S23 Ultra', 'Galaxy S23+', 'Galaxy S23', 'Galaxy S23 FE',
+                'Galaxy Z Fold5', 'Galaxy Z Flip5',
+                'Galaxy A54 5G', 'Galaxy A34 5G', 'Galaxy A14 5G', 'Galaxy A24'
+            ],
+            google: [
+                'Pixel 8 Pro', 'Pixel 8', 'Pixel 8a', 'Pixel 7a',
+                'Pixel 7 Pro', 'Pixel 7', 'Pixel 6a'
+            ],
+            xiaomi: [
+                '14 Ultra', '14 Pro', '14',
+                '13T Pro', '13T',
+                'Redmi Note 13 Pro+', 'Redmi Note 13 Pro', 'Redmi Note 13', 'Redmi 13C',
+                'Poco X6 Pro', 'Poco F5'
+            ],
+            oneplus: [
+                '12', '12R', '11',
+                'Nord 3', 'Nord CE 3', 'Nord N30'
+            ],
+            oppo: [
+                'Find X6 Pro', 'Find X5 Pro',
+                'Reno 11 Pro', 'Reno 10 Pro+',
+                'A78 5G', 'A58'
+            ],
+            vivo: [
+                'X100 Pro', 'X90 Pro',
+                'V29 Pro', 'V27 Pro',
+                'Y36 5G', 'Y27'
+            ],
+            motorola: [
+                'Edge 40 Pro', 'Edge 40', 'Edge 30 Ultra',
+                'Moto G84', 'Moto G73'
+            ],
+            sony: [
+                'Xperia 1 V', 'Xperia 5 V', 'Xperia 10 V', 'Xperia 1 IV'
+            ],
+            realme: [
+                'GT 5 Pro', 'GT Neo 5', '11 Pro+',
+                'C55', 'Narzo 60 Pro'
+            ],
+            nokia: [
+                'XR21', 'G60 5G', 'X30 5G'
+            ],
+            asus: [
+                'ROG Phone 7', 'ROG Phone 6',
+                'Zenfone 10', 'Zenfone 9'
+            ],
+            nothing: [
+                'Phone (2)', 'Phone (2a)', 'Phone (1)'
+            ],
+            honor: [
+                'Magic 6 Pro', 'Magic 5 Pro', '90', 'X9a'
+            ],
+            huawei: [
+                'P60 Pro', 'Mate 60 Pro', 'Nova 11'
+            ],
+            tecno: [
+                'Phantom X2 Pro'
+            ],
+            infinix: [
+                'Note 30 VIP'
+            ],
+            poco: [
+                'M6 Pro'
+            ],
+            alcatel: [
+                '3L (2021)', '1S (2021)', '3X (2020)'
+            ],
+            blackberry: [
+                'KEY2', 'KEY2 LE', 'Motion'
+            ],
+            cat: [
+                'S75', 'S62 Pro', 'S53'
+            ],
+            fairphone: [
+                '5', '4', '3+'
+            ],
+            htc: [
+                'U23 Pro', 'Desire 22 Pro', 'U20 5G', 'U19e'
+            ],
+            lenovo: [
+                'Legion Y90', 'Legion Phone Duel 2', 'K13 Note', 'K12 Pro'
+            ],
+            lg: [
+                'Wing 5G', 'Velvet 5G', 'V60 ThinQ 5G', 'G8X ThinQ'
+            ],
+            microsoft: [
+                'Surface Duo 2', 'Surface Duo'
+            ]
         };
 
         const repairs = [
@@ -658,7 +794,9 @@
 
         // State
         let selectedDevice = null;
+        let selectedBrand = null;
         let selectedModel = null;
+        let deviceText = null;
         let selectedRepairs = [];
 
         // Initialize
@@ -685,25 +823,97 @@
 
         function selectDevice(deviceId) {
             selectedDevice = deviceId;
+            selectedBrand = null;
             selectedModel = null;
+            deviceText = null;
 
             document.querySelectorAll('#deviceGrid .card').forEach(c => c.classList.remove('selected'));
             document.querySelector(`[data-device="${deviceId}"]`).classList.add('selected');
 
-            renderModels(deviceId);
+            // Hide all secondary selection methods
+            document.getElementById('brandGrid').style.display = 'none';
+            document.getElementById('modelGrid').style.display = 'none';
+            document.getElementById('deviceTextInput').style.display = 'none';
+
+            const device = devices.find(d => d.id === deviceId);
+
+            if (device.hasModels) {
+                // Smartphones: show brand selection
+                renderBrands();
+            } else {
+                // Other devices: show text input
+                showDeviceTextInput();
+            }
+
             document.getElementById('nextToRepair').disabled = true;
         }
 
-        function renderModels(deviceId) {
-            const device = devices.find(d => d.id === deviceId);
+        function renderBrands() {
+            const grid = document.getElementById('brandGrid');
+            grid.style.display = 'grid';
+            grid.innerHTML = smartphoneBrands.map(brand => `
+                <div class="card" data-brand="${brand.id}">
+                    <div class="card-icon">${brand.icon}</div>
+                    <div class="card-title">${brand.name}</div>
+                </div>
+            `).join('');
+
+            grid.querySelectorAll('.card').forEach(card => {
+                card.addEventListener('click', () => selectBrand(card.dataset.brand));
+            });
+        }
+
+        function selectBrand(brandId) {
+            selectedBrand = brandId;
+            selectedModel = null;
+
+            document.querySelectorAll('#brandGrid .card').forEach(c => c.classList.remove('selected'));
+            document.querySelector(`[data-brand="${brandId}"]`).classList.add('selected');
+
+            renderModels(brandId);
+            document.getElementById('nextToRepair').disabled = true;
+        }
+
+        function showDeviceTextInput() {
+            document.getElementById('deviceTextInput').style.display = 'block';
+            const input = document.getElementById('deviceText');
+            
+            input.value = '';
+            input.focus();
+
+            // Remove any existing listener to avoid duplicates
+            const newInput = input.cloneNode(true);
+            input.parentNode.replaceChild(newInput, input);
+
+            newInput.addEventListener('input', (e) => {
+                deviceText = e.target.value.trim();
+                document.getElementById('nextToRepair').disabled = deviceText.length === 0;
+            });
+        }
+
+        function renderModels(brandId) {
+            const brand = smartphoneBrands.find(b => b.id === brandId);
             const grid = document.getElementById('modelGrid');
             grid.style.display = 'grid';
-            grid.innerHTML = models[deviceId].map(model => `
+            
+            const models = smartphoneModels[brandId] || [];
+            const modelCards = models.map(model => `
                 <div class="card" data-model="${model}">
-                    <div class="card-icon">${device.icon}</div>
+                    <div class="card-icon">${brand.icon}</div>
                     <div class="card-title">${model}</div>
                 </div>
             `).join('');
+
+            // Add "Other" option
+            const otherCard = `
+                <div class="card" data-model="Other">
+                    <div class="card-icon">❓</div>
+                    <div class="card-title">Other model</div>
+                    <div class="card-subtitle">Mine is not in list</div>
+                </div>
+            `;
+
+            grid.innerHTML = modelCards + otherCard;
 
             grid.querySelectorAll('.card').forEach(card => {
                 card.addEventListener('click', () => selectModel(card.dataset.model));
@@ -796,7 +1006,15 @@
                 .join(', ');
             
             document.getElementById('summaryDevice').textContent = device.name;
-            document.getElementById('summaryModel').textContent = selectedModel;
+            
+            // Handle different device selection types
+            if (device.hasModels) {
+                const brand = smartphoneBrands.find(b => b.id === selectedBrand);
+                document.getElementById('summaryModel').textContent = `${brand.name} - ${selectedModel}`;
+            } else {
+                document.getElementById('summaryModel').textContent = deviceText;
+            }
+            
             document.getElementById('summaryRepair').textContent = repairList;
         }
 
@@ -824,7 +1042,9 @@
                 // Here you would send data to backend
                 const formData = {
                     device: selectedDevice,
+                    brand: selectedBrand,
                     model: selectedModel,
+                    deviceText: deviceText,
                     repairs: selectedRepairs,
                     firstName: document.getElementById('firstName').value,
                     lastName: document.getElementById('lastName').value,
