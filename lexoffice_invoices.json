@@ -1,0 +1,95 @@
+{
+  "_comment_file": "=== LEXOFFICE API - CREATE INVOICE ===",
+  "_comment_purpose": "Creates a finalized invoice for mobile phone display replacement (time + material)",
+  
+  "description": "Lexoffice API Query - Invoice for Mobile Phone Display Replacement",
+  "endpoint": "POST https://api.lexware.io/v1/invoices?finalize=true",
+  
+  "_comment_endpoint": "The ?finalize=true parameter creates the invoice in 'open' status (ready to send). Without it, invoice is created as 'draft'",
+  
+  "headers": {
+    "Authorization": "Bearer {accessToken}",
+    "_comment_auth": "Replace {accessToken} with your API key from https://app.lexware.de/addons/public-api",
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  },
+  
+  "body": {
+    "_comment_voucherDate": "Invoice date in ISO 8601 format (yyyy-MM-ddTHH:mm:ss.SSSXXX)",
+    "voucherDate": "2026-01-08T00:00:00.000+01:00",
+    
+    "_comment_address": "Customer address - can be a one-time address OR reference an existing contact via 'contactId'",
+    "address": {
+      "name": "Max Mustermann",
+      "_comment_name_alternative": "For existing contacts: add 'contactId' field and name will be auto-filled",
+      "street": "Beispielstraße 123",
+      "zip": "12345",
+      "city": "Berlin",
+      "countryCode": "DE",
+      "_comment_countryCode": "ISO 3166 alpha2 country code (e.g., DE for Germany)"
+    },
+    
+    "_comment_lineItems": "Invoice line items - Maximum 300 items per invoice",
+    "lineItems": [
+      {
+        "_comment_item1": "SERVICE item - Labor/working time",
+        "type": "service",
+        "_comment_type": "Possible values: 'service', 'material', 'custom', 'text'",
+        "name": "Arbeitszeit Display-Reparatur",
+        "quantity": 1.5,
+        "_comment_quantity": "Up to 4 decimal places allowed",
+        "unitName": "Stunden",
+        "_comment_unitName": "If unit name is unknown in Lexoffice, it will be created automatically",
+        "unitPrice": {
+          "currency": "EUR",
+          "_comment_currency": "Currently only EUR is supported",
+          "netAmount": 50.00,
+          "_comment_netAmount": "Net price per unit (up to 4 decimals). Use this when taxType is 'net'",
+          "taxRatePercentage": 19,
+          "_comment_taxRate": "Valid rates: 0, 7, 19 (as of March 2024)"
+        }
+      },
+      {
+        "_comment_item2": "MATERIAL item - Physical product/part",
+        "type": "material",
+        "name": "Display iPhone 13",
+        "quantity": 1,
+        "unitName": "Stück",
+        "unitPrice": {
+          "currency": "EUR",
+          "netAmount": 120.00,
+          "taxRatePercentage": 19
+        }
+      }
+    ],
+    
+    "_comment_totalPrice": "Total price calculation - Currency is required, amounts are calculated automatically",
+    "totalPrice": {
+      "currency": "EUR",
+      "_comment_calculation": "Lexoffice calculates: totalNetAmount (€195), totalGrossAmount (€232.05), totalTaxAmount (€37.05)"
+    },
+    
+    "_comment_taxConditions": "Tax settings for the invoice",
+    "taxConditions": {
+      "taxType": "net",
+      "_comment_taxType": "Possible values: 'net', 'gross', 'vatfree', 'intraCommunitySupply', 'constructionService13b', 'externalService13b', 'thirdPartyCountryService', 'thirdPartyCountryDelivery', 'photovoltaicEquipment'"
+    },
+    
+    "_comment_paymentConditions": "Payment terms for the invoice",
+    "paymentConditions": {
+      "paymentTermLabel": "10 Tage - 3 %, 30 Tage netto",
+      "_comment_paymentTermLabel": "Display label for payment terms",
+      "paymentTermDuration": 30,
+      "_comment_paymentTermDuration": "Number of days until payment is due"
+    }
+  },
+  
+  "notes": {
+    "calculation_labor": "1.5 hours × €50 = €75 (net)",
+    "calculation_material": "1 display × €120 = €120 (net)",
+    "calculation_total": "€195 net + 19% VAT (€37.05) = €232.05 gross",
+    "paymentTerms": "30 days net, 3% discount within 10 days",
+    "shopDetails": "IMPORTANT: Shop details (your company name, address, tax number, email) must be configured in the Lexoffice organization profile settings at https://app.lexware.de/settings/company - they cannot be set via this API call",
+    "response": "On success, API returns: id (UUID), resourceUri, createdDate, updatedDate, version"
+  }
+}
