@@ -29,6 +29,44 @@
             -webkit-font-smoothing: antialiased;
         }
 
+        /* Language Switcher */
+        .language-switcher {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .lang-btn {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: var(--secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 16px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .lang-btn:hover {
+            color: var(--primary);
+            background: var(--bg);
+        }
+
+        .lang-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
         .container {
             max-width: 980px;
             margin: 0 auto;
@@ -522,6 +560,12 @@
     </style>
 </head>
 <body>
+    <!-- Language Switcher -->
+    <div class="language-switcher">
+        <button class="lang-btn active" data-lang="en">English</button>
+        <button class="lang-btn" data-lang="de">Deutsch</button>
+    </div>
+
     <div class="container">
         <div class="progress-container">
             <div class="progress-steps">
@@ -647,7 +691,7 @@
 
                 <div class="form-group">
                     <label for="postalCode">Postal Code *</label>
-                    <input type="text" id="postalCode" required placeholder="12345">
+                    <input type="text" id="postalCode" required placeholder="12345" pattern="[0-9]{5}" maxlength="5">
                 </div>
 
                 <div class="form-group">
@@ -684,12 +728,294 @@
     </div>
 
     <script>
+        // Translations
+        const translations = {
+            en: {
+                // Progress Steps
+                stepDevice: 'Select Device',
+                stepRepair: 'Select Repair',
+                stepQuote: 'Get Quote',
+                
+                // Step 1
+                titleDevice: 'Select your device',
+                subtitleDevice: 'Choose the device you need repaired',
+                deviceSmartphones: 'Smartphones',
+                deviceSmartphonesDesc: 'Mobile phones',
+                deviceLaptops: 'Laptops',
+                deviceLaptopsDesc: 'Portable computers',
+                deviceWearables: 'Wearables',
+                deviceWearablesDesc: 'Smart watches',
+                deviceOther: 'Other',
+                deviceOtherDesc: 'Other devices',
+                labelSelectModel: 'Select Model',
+                optionChooseModel: 'Choose a model...',
+                optionOtherModel: 'Other model (not in list)',
+                labelDeviceText: 'Please specify your device',
+                placeholderDeviceText: 'e.g., MacBook Pro 2021, Apple Watch Series 8',
+                
+                // Step 2
+                titleRepair: 'What needs fixing?',
+                subtitleRepair: 'Select one or more repair services you need',
+                noRepairsSelected: 'No repairs selected yet',
+                
+                // Step 3
+                titleQuote: 'Get your quote',
+                subtitleQuote: "We'll contact you with a detailed estimate",
+                summaryTitle: 'Repair Summary',
+                summaryDevice: 'Device',
+                summaryModel: 'Model',
+                summaryRepairs: 'Repairs',
+                
+                // Form labels
+                labelFirstName: 'First Name',
+                labelLastName: 'Last Name',
+                labelEmail: 'Email Address',
+                labelPhone: 'Phone Number',
+                labelStreet: 'Street Name',
+                labelHouseNumber: 'House Number',
+                labelPostalCode: 'Postal Code',
+                labelCity: 'City',
+                labelImei: 'IMEI Number (Optional)',
+                labelNotes: 'Additional Notes (Optional)',
+                
+                // Placeholders
+                placeholderFirstName: 'John',
+                placeholderLastName: 'Doe',
+                placeholderEmail: 'john@example.com',
+                placeholderPhone: '+49 123 4567890',
+                placeholderStreet: 'Hauptstraße',
+                placeholderHouseNumber: '123',
+                placeholderPostalCode: '12345',
+                placeholderCity: 'Berlin',
+                placeholderImei: '123456789012345',
+                placeholderNotes: 'Tell us more about the issue...',
+                
+                // Buttons
+                btnContinue: 'Continue',
+                btnBack: 'Back',
+                btnSubmit: 'Submit Request',
+                btnStartNew: 'Start New Request',
+                
+                // Success
+                successTitle: 'Request Submitted!',
+                successText: "We'll contact you shortly with a detailed quote and next steps.",
+                
+                // Repairs
+                repairScreen: 'Screen Repair',
+                repairBattery: 'Battery Replacement',
+                repairWater: 'Water Damage',
+                repairCamera: 'Camera Repair',
+                repairCharging: 'Charging Port',
+                repairSpeaker: 'Speaker Repair',
+                repairButton: 'Button Repair',
+                repairBackGlass: 'Back Glass',
+                repairSoftware: 'Software Issue',
+                repairData: 'Data Recovery',
+                repairMicrophone: 'Microphone',
+                repairFaceID: 'Face ID Repair',
+                repairMotherboard: 'Motherboard',
+                repairAntenna: 'Antenna Repair',
+                repairVibration: 'Vibration Motor',
+                repairHome: 'Home Button',
+                repairSIM: 'SIM Card Tray',
+                repairWiFi: 'WiFi/Bluetooth',
+                repairTouchID: 'Touch ID',
+                repairCheckup: 'General Checkup'
+            },
+            de: {
+                // Progress Steps
+                stepDevice: 'Gerät wählen',
+                stepRepair: 'Reparatur wählen',
+                stepQuote: 'Angebot erhalten',
+                
+                // Step 1
+                titleDevice: 'Wählen Sie Ihr Gerät',
+                subtitleDevice: 'Wählen Sie das zu reparierende Gerät',
+                deviceSmartphones: 'Smartphones',
+                deviceSmartphonesDesc: 'Mobiltelefone',
+                deviceLaptops: 'Laptops',
+                deviceLaptopsDesc: 'Tragbare Computer',
+                deviceWearables: 'Wearables',
+                deviceWearablesDesc: 'Smartwatches',
+                deviceOther: 'Andere',
+                deviceOtherDesc: 'Andere Geräte',
+                labelSelectModel: 'Modell auswählen',
+                optionChooseModel: 'Wählen Sie ein Modell...',
+                optionOtherModel: 'Anderes Modell (nicht in der Liste)',
+                labelDeviceText: 'Bitte geben Sie Ihr Gerät an',
+                placeholderDeviceText: 'z.B. MacBook Pro 2021, Apple Watch Series 8',
+                
+                // Step 2
+                titleRepair: 'Was muss repariert werden?',
+                subtitleRepair: 'Wählen Sie einen oder mehrere Reparaturdienste',
+                noRepairsSelected: 'Noch keine Reparaturen ausgewählt',
+                
+                // Step 3
+                titleQuote: 'Ihr Angebot erhalten',
+                subtitleQuote: 'Wir kontaktieren Sie mit einem detaillierten Kostenvoranschlag',
+                summaryTitle: 'Reparaturübersicht',
+                summaryDevice: 'Gerät',
+                summaryModel: 'Modell',
+                summaryRepairs: 'Reparaturen',
+                
+                // Form labels
+                labelFirstName: 'Vorname',
+                labelLastName: 'Nachname',
+                labelEmail: 'E-Mail-Adresse',
+                labelPhone: 'Telefonnummer',
+                labelStreet: 'Straße',
+                labelHouseNumber: 'Hausnummer',
+                labelPostalCode: 'Postleitzahl',
+                labelCity: 'Stadt',
+                labelImei: 'IMEI-Nummer (Optional)',
+                labelNotes: 'Zusätzliche Anmerkungen (Optional)',
+                
+                // Placeholders
+                placeholderFirstName: 'Max',
+                placeholderLastName: 'Mustermann',
+                placeholderEmail: 'max@beispiel.de',
+                placeholderPhone: '+49 123 4567890',
+                placeholderStreet: 'Hauptstraße',
+                placeholderHouseNumber: '123',
+                placeholderPostalCode: '12345',
+                placeholderCity: 'Berlin',
+                placeholderImei: '123456789012345',
+                placeholderNotes: 'Erzählen Sie uns mehr über das Problem...',
+                
+                // Buttons
+                btnContinue: 'Weiter',
+                btnBack: 'Zurück',
+                btnSubmit: 'Anfrage senden',
+                btnStartNew: 'Neue Anfrage starten',
+                
+                // Success
+                successTitle: 'Anfrage gesendet!',
+                successText: 'Wir kontaktieren Sie in Kürze mit einem detaillierten Angebot und den nächsten Schritten.',
+                
+                // Repairs
+                repairScreen: 'Display-Reparatur',
+                repairBattery: 'Akku-Austausch',
+                repairWater: 'Wasserschaden',
+                repairCamera: 'Kamera-Reparatur',
+                repairCharging: 'Ladebuchse',
+                repairSpeaker: 'Lautsprecher-Reparatur',
+                repairButton: 'Tasten-Reparatur',
+                repairBackGlass: 'Rückseiten-Glas',
+                repairSoftware: 'Software-Problem',
+                repairData: 'Datenwiederherstellung',
+                repairMicrophone: 'Mikrofon',
+                repairFaceID: 'Face ID Reparatur',
+                repairMotherboard: 'Hauptplatine',
+                repairAntenna: 'Antennen-Reparatur',
+                repairVibration: 'Vibrationsmotor',
+                repairHome: 'Home-Taste',
+                repairSIM: 'SIM-Kartenfach',
+                repairWiFi: 'WLAN/Bluetooth',
+                repairTouchID: 'Touch ID',
+                repairCheckup: 'Allgemeine Überprüfung'
+            }
+        };
+
+        let currentLang = 'en';
+
+        function t(key) {
+            return translations[currentLang][key] || key;
+        }
+
+        function updateLanguage(lang) {
+            currentLang = lang;
+            
+            // Update language buttons
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+            
+            // Update all text content
+            updateAllText();
+        }
+
+        function updateAllText() {
+            // Progress steps
+            document.querySelectorAll('.step')[0].querySelector('.step-label').textContent = t('stepDevice');
+            document.querySelectorAll('.step')[1].querySelector('.step-label').textContent = t('stepRepair');
+            document.querySelectorAll('.step')[2].querySelector('.step-label').textContent = t('stepQuote');
+            
+            // Step 1
+            document.querySelector('#step1 h1').textContent = t('titleDevice');
+            document.querySelector('#step1 .subtitle').textContent = t('subtitleDevice');
+            
+            // Step 2
+            document.querySelector('#step2 h1').textContent = t('titleRepair');
+            document.querySelector('#step2 .subtitle').textContent = t('subtitleRepair');
+            const repairsText = document.getElementById('selectedRepairsText');
+            if (selectedRepairs.length === 0) {
+                repairsText.textContent = t('noRepairsSelected');
+            }
+            
+            // Step 3
+            document.querySelector('#step3 h1').textContent = t('titleQuote');
+            document.querySelector('#step3 .subtitle').textContent = t('subtitleQuote');
+            document.querySelector('.summary-title').textContent = t('summaryTitle');
+            document.querySelectorAll('.summary-label')[0].textContent = t('summaryDevice');
+            document.querySelectorAll('.summary-label')[1].textContent = t('summaryModel');
+            document.querySelectorAll('.summary-label')[2].textContent = t('summaryRepairs');
+            
+            // Form labels
+            document.querySelector('label[for="firstName"]').textContent = t('labelFirstName') + ' *';
+            document.querySelector('label[for="lastName"]').textContent = t('labelLastName') + ' *';
+            document.querySelector('label[for="email"]').textContent = t('labelEmail') + ' *';
+            document.querySelector('label[for="phone"]').textContent = t('labelPhone') + ' *';
+            document.querySelector('label[for="street"]').textContent = t('labelStreet') + ' *';
+            document.querySelector('label[for="houseNumber"]').textContent = t('labelHouseNumber') + ' *';
+            document.querySelector('label[for="postalCode"]').textContent = t('labelPostalCode') + ' *';
+            document.querySelector('label[for="city"]').textContent = t('labelCity') + ' *';
+            document.querySelector('label[for="imei"]').textContent = t('labelImei');
+            document.querySelector('label[for="notes"]').textContent = t('labelNotes');
+            
+            // Form placeholders
+            document.getElementById('firstName').placeholder = t('placeholderFirstName');
+            document.getElementById('lastName').placeholder = t('placeholderLastName');
+            document.getElementById('email').placeholder = t('placeholderEmail');
+            document.getElementById('phone').placeholder = t('placeholderPhone');
+            document.getElementById('street').placeholder = t('placeholderStreet');
+            document.getElementById('houseNumber').placeholder = t('placeholderHouseNumber');
+            document.getElementById('postalCode').placeholder = t('placeholderPostalCode');
+            document.getElementById('city').placeholder = t('placeholderCity');
+            document.getElementById('imei').placeholder = t('placeholderImei');
+            document.getElementById('notes').placeholder = t('placeholderNotes');
+            
+            // Buttons
+            document.getElementById('nextToRepair').textContent = t('btnContinue');
+            document.getElementById('backToDevice').textContent = t('btnBack');
+            document.getElementById('nextToQuote').textContent = t('btnContinue');
+            document.getElementById('backToRepair').textContent = t('btnBack');
+            document.querySelector('#quoteForm button[type="submit"]').textContent = t('btnSubmit');
+            
+            // Success
+            document.querySelector('.success-title').textContent = t('successTitle');
+            document.querySelector('.success-text').textContent = t('successText');
+            document.querySelector('#success button').textContent = t('btnStartNew');
+            
+            // Re-render dynamic content
+            if (selectedDevice) {
+                renderDevices();
+                if (devices.find(d => d.id === selectedDevice)?.hasModels && selectedBrand) {
+                    renderBrands();
+                    renderModels(selectedBrand);
+                }
+            }
+            renderRepairs();
+            if (selectedRepairs.length > 0) {
+                updateSelectedRepairsDisplay();
+            }
+        }
+
         // Mock data (would come from backend)
         const devices = [
-            { id: 'smartphones', name: 'Smartphones', icon: '📱', desc: 'Mobile phones', hasModels: true },
-            { id: 'laptops', name: 'Laptops', icon: '💻', desc: 'Portable computers', hasModels: false },
-            { id: 'wearables', name: 'Wearables', icon: '⌚', desc: 'Smart watches', hasModels: false },
-            { id: 'other', name: 'Other', icon: '🔧', desc: 'Other devices', hasModels: false }
+            { id: 'smartphones', nameKey: 'deviceSmartphones', descKey: 'deviceSmartphonesDesc', icon: '📱', hasModels: true },
+            { id: 'laptops', nameKey: 'deviceLaptops', descKey: 'deviceLaptopsDesc', icon: '💻', hasModels: false },
+            { id: 'wearables', nameKey: 'deviceWearables', descKey: 'deviceWearablesDesc', icon: '⌚', hasModels: false },
+            { id: 'other', nameKey: 'deviceOther', descKey: 'deviceOtherDesc', icon: '🔧', hasModels: false }
         ];
 
         // Smartphone brands extracted from CSV
@@ -822,26 +1148,26 @@
         };
 
         const repairs = [
-            { id: 1, name: 'Screen Repair', icon: '🔧' },
-            { id: 2, name: 'Battery Replacement', icon: '🔋' },
-            { id: 3, name: 'Water Damage', icon: '💧' },
-            { id: 4, name: 'Camera Repair', icon: '📷' },
-            { id: 5, name: 'Charging Port', icon: '⚡' },
-            { id: 6, name: 'Speaker Repair', icon: '🔊' },
-            { id: 7, name: 'Button Repair', icon: '🔘' },
-            { id: 8, name: 'Back Glass', icon: '🪟' },
-            { id: 9, name: 'Software Issue', icon: '💾' },
-            { id: 10, name: 'Data Recovery', icon: '💿' },
-            { id: 11, name: 'Microphone', icon: '🎤' },
-            { id: 12, name: 'Face ID Repair', icon: '👤' },
-            { id: 13, name: 'Motherboard', icon: '🖥️' },
-            { id: 14, name: 'Antenna Repair', icon: '📡' },
-            { id: 15, name: 'Vibration Motor', icon: '📳' },
-            { id: 16, name: 'Home Button', icon: '⏺️' },
-            { id: 17, name: 'SIM Card Tray', icon: '📇' },
-            { id: 18, name: 'WiFi/Bluetooth', icon: '📶' },
-            { id: 19, name: 'Touch ID', icon: '👆' },
-            { id: 20, name: 'General Checkup', icon: '🔍' }
+            { id: 1, nameKey: 'repairScreen', icon: '🔧' },
+            { id: 2, nameKey: 'repairBattery', icon: '🔋' },
+            { id: 3, nameKey: 'repairWater', icon: '💧' },
+            { id: 4, nameKey: 'repairCamera', icon: '📷' },
+            { id: 5, nameKey: 'repairCharging', icon: '⚡' },
+            { id: 6, nameKey: 'repairSpeaker', icon: '🔊' },
+            { id: 7, nameKey: 'repairButton', icon: '🔘' },
+            { id: 8, nameKey: 'repairBackGlass', icon: '🪟' },
+            { id: 9, nameKey: 'repairSoftware', icon: '💾' },
+            { id: 10, nameKey: 'repairData', icon: '💿' },
+            { id: 11, nameKey: 'repairMicrophone', icon: '🎤' },
+            { id: 12, nameKey: 'repairFaceID', icon: '👤' },
+            { id: 13, nameKey: 'repairMotherboard', icon: '🖥️' },
+            { id: 14, nameKey: 'repairAntenna', icon: '📡' },
+            { id: 15, nameKey: 'repairVibration', icon: '📳' },
+            { id: 16, nameKey: 'repairHome', icon: '⏺️' },
+            { id: 17, nameKey: 'repairSIM', icon: '📇' },
+            { id: 18, nameKey: 'repairWiFi', icon: '📶' },
+            { id: 19, nameKey: 'repairTouchID', icon: '👆' },
+            { id: 20, nameKey: 'repairCheckup', icon: '🔍' }
         ];
 
         // State
@@ -863,8 +1189,8 @@
             grid.innerHTML = devices.map(device => `
                 <div class="card" data-device="${device.id}">
                     <div class="card-icon">${device.icon}</div>
-                    <div class="card-title">${device.name}</div>
-                    <div class="card-subtitle">${device.desc}</div>
+                    <div class="card-title">${t(device.nameKey)}</div>
+                    <div class="card-subtitle">${t(device.descKey)}</div>
                 </div>
             `).join('');
 
@@ -934,13 +1260,15 @@
             const input = document.getElementById('deviceText');
             
             input.value = '';
+            input.placeholder = t('placeholderDeviceText');
+            document.querySelector('label[for="deviceText"]').textContent = t('labelDeviceText');
             input.focus();
 
             // Remove any existing listener to avoid duplicates
             const newInput = input.cloneNode(true);
             input.parentNode.replaceChild(newInput, input);
 
-            newInput.addEventListener('input', (e) => {
+            document.getElementById('deviceText').addEventListener('input', (e) => {
                 deviceText = e.target.value.trim();
                 document.getElementById('nextToRepair').disabled = deviceText.length === 0;
             });
@@ -956,14 +1284,17 @@
             const models = smartphoneModels[brandId] || [];
             
             // Build options HTML
-            let optionsHTML = '<option value="">Choose a model...</option>';
+            let optionsHTML = `<option value="">${t('optionChooseModel')}</option>`;
             models.forEach(model => {
                 optionsHTML += `<option value="${model}">${model}</option>`;
             });
             // Add "Other" option
-            optionsHTML += '<option value="Other">Other model (not in list)</option>';
+            optionsHTML += `<option value="Other">${t('optionOtherModel')}</option>`;
             
             modelSelect.innerHTML = optionsHTML;
+            
+            // Update label
+            document.querySelector('label[for="modelSelect"]').textContent = t('labelSelectModel');
             
             // Remove existing listener to avoid duplicates
             const newSelect = modelSelect.cloneNode(true);
@@ -991,7 +1322,7 @@
             grid.innerHTML = repairs.map(repair => `
                 <div class="card" data-repair="${repair.id}">
                     <div class="card-icon">${repair.icon}</div>
-                    <div class="card-title">${repair.name}</div>
+                    <div class="card-title">${t(repair.nameKey)}</div>
                 </div>
             `).join('');
 
@@ -1022,13 +1353,13 @@
             const displayElement = document.getElementById('selectedRepairsText');
             
             if (selectedRepairs.length === 0) {
-                displayElement.innerHTML = 'No repairs selected yet';
+                displayElement.innerHTML = t('noRepairsSelected');
                 displayElement.classList.add('empty');
             } else {
                 const repairTags = selectedRepairs
                     .map(id => {
                         const repair = repairs.find(r => r.id == id);
-                        return `<span class="repair-tag">${repair.icon} ${repair.name}</span>`;
+                        return `<span class="repair-tag">${repair.icon} ${t(repair.nameKey)}</span>`;
                     })
                     .join('');
                 displayElement.innerHTML = repairTags;
@@ -1061,10 +1392,13 @@
         function updateSummary() {
             const device = devices.find(d => d.id === selectedDevice);
             const repairList = selectedRepairs
-                .map(id => repairs.find(r => r.id == id).name)
+                .map(id => {
+                    const repair = repairs.find(r => r.id == id);
+                    return t(repair.nameKey);
+                })
                 .join(', ');
             
-            document.getElementById('summaryDevice').textContent = device.name;
+            document.getElementById('summaryDevice').textContent = t(device.nameKey);
             
             // Handle different device selection types
             if (device.hasModels) {
@@ -1078,6 +1412,13 @@
         }
 
         function setupEventListeners() {
+            // Language switcher
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    updateLanguage(btn.dataset.lang);
+                });
+            });
+
             document.getElementById('nextToRepair').addEventListener('click', () => {
                 goToStep(2);
             });
