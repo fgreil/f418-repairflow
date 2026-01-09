@@ -274,6 +274,30 @@
             color: var(--primary);
         }
 
+        select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            background: var(--card-bg);
+            transition: all 0.2s;
+            color: var(--primary);
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2386868b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 48px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
+        }
+
         input:focus, textarea:focus {
             outline: none;
             border-color: var(--accent);
@@ -529,8 +553,15 @@
             <!-- For Smartphones: Brand Selection -->
             <div id="brandGrid" class="grid" style="display: none;"></div>
             
-            <!-- For Smartphones: Model Selection -->
-            <div id="modelGrid" class="grid" style="display: none;"></div>
+            <!-- For Smartphones: Model Dropdown -->
+            <div id="modelDropdown" style="display: none; margin-bottom: 40px;">
+                <div class="form-group">
+                    <label for="modelSelect">Select Model</label>
+                    <select id="modelSelect">
+                        <option value="">Choose a model...</option>
+                    </select>
+                </div>
+            </div>
 
             <!-- For Non-Smartphones: Text Input -->
             <div id="deviceTextInput" style="display: none; margin-bottom: 40px;">
@@ -853,7 +884,7 @@
 
             // Hide all secondary selection methods
             document.getElementById('brandGrid').style.display = 'none';
-            document.getElementById('modelGrid').style.display = 'none';
+            document.getElementById('modelDropdown').style.display = 'none';
             document.getElementById('deviceTextInput').style.display = 'none';
 
             const device = devices.find(d => d.id === deviceId);
@@ -875,9 +906,9 @@
             grid.innerHTML = smartphoneBrands.map(brand => `
                 <div class="card" data-brand="${brand.id}">
                     <img class="card-logo" 
-                         src="logos/${brand.id}.png" 
+                         src="logos/${brand.id}.svg" 
                          alt="${brand.name}" 
-                         onerror="this.classList.add('hidden')">
+                         onerror="this.onerror=null; this.src='logos/${brand.id}.png'; this.onerror=function(){this.classList.add('hidden');}">
                     <div class="card-title">${brand.name}</div>
                 </div>
             `).join('');
@@ -917,40 +948,41 @@
 
         function renderModels(brandId) {
             const brand = smartphoneBrands.find(b => b.id === brandId);
-            const grid = document.getElementById('modelGrid');
-            grid.style.display = 'grid';
+            const modelDropdown = document.getElementById('modelDropdown');
+            const modelSelect = document.getElementById('modelSelect');
+            
+            modelDropdown.style.display = 'block';
             
             const models = smartphoneModels[brandId] || [];
-            const modelCards = models.map(model => `
-                <div class="card" data-model="${model}">
-                    <img class="card-logo" 
-                         src="logos/${brandId}.png" 
-                         alt="${brand.name}" 
-                         onerror="this.classList.add('hidden')">
-                    <div class="card-title">${model}</div>
-                </div>
-            `).join('');
-
+            
+            // Build options HTML
+            let optionsHTML = '<option value="">Choose a model...</option>';
+            models.forEach(model => {
+                optionsHTML += `<option value="${model}">${model}</option>`;
+            });
             // Add "Other" option
-            const otherCard = `
-                <div class="card" data-model="Other">
-                    <div class="card-icon">❓</div>
-                    <div class="card-title">Other model</div>
-                    <div class="card-subtitle">Mine is not in list</div>
-                </div>
-            `;
-
-            grid.innerHTML = modelCards + otherCard;
-
-            grid.querySelectorAll('.card').forEach(card => {
-                card.addEventListener('click', () => selectModel(card.dataset.model));
+            optionsHTML += '<option value="Other">Other model (not in list)</option>';
+            
+            modelSelect.innerHTML = optionsHTML;
+            
+            // Remove existing listener to avoid duplicates
+            const newSelect = modelSelect.cloneNode(true);
+            modelSelect.parentNode.replaceChild(newSelect, modelSelect);
+            
+            // Add change listener
+            document.getElementById('modelSelect').addEventListener('change', (e) => {
+                selectModel(e.target.value);
             });
         }
 
         function selectModel(model) {
+            if (!model) {
+                selectedModel = null;
+                document.getElementById('nextToRepair').disabled = true;
+                return;
+            }
+            
             selectedModel = model;
-            document.querySelectorAll('#modelGrid .card').forEach(c => c.classList.remove('selected'));
-            document.querySelector(`[data-model="${model}"]`).classList.add('selected');
             document.getElementById('nextToRepair').disabled = false;
         }
 
