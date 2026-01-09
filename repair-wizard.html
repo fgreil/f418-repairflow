@@ -421,6 +421,160 @@
             font-weight: 500;
         }
 
+        /* Service Type Selector */
+        .service-type-selector {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .service-option {
+            flex: 1;
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 18px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .service-option:hover {
+            border-color: var(--accent);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        }
+
+        .service-option.selected {
+            border-color: var(--accent);
+            background: linear-gradient(135deg, rgba(0, 113, 227, 0.05), transparent);
+        }
+
+        .service-badge {
+            display: inline-block;
+            background: #34c759;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .service-icon {
+            font-size: 40px;
+            margin-bottom: 16px;
+        }
+
+        .service-title {
+            font-size: 19px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        .service-description {
+            font-size: 14px;
+            color: var(--secondary);
+            line-height: 1.4;
+        }
+
+        /* Date and Time Picker */
+        .date-time-container {
+            margin-bottom: 40px;
+        }
+
+        .date-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .date-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .date-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .date-card.selected {
+            border-color: var(--accent);
+            border-width: 2px;
+            background: linear-gradient(135deg, rgba(0, 113, 227, 0.08), transparent);
+        }
+
+        .date-day {
+            font-size: 13px;
+            color: var(--secondary);
+            margin-bottom: 4px;
+        }
+
+        .date-number {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .date-month {
+            font-size: 12px;
+            color: var(--secondary);
+            margin-top: 4px;
+        }
+
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        .time-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .time-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .time-card.selected {
+            border-color: var(--accent);
+            border-width: 2px;
+            background: var(--accent);
+            color: white;
+        }
+
+        .time-card.unavailable {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .section-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--primary);
+        }
+
         /* Buttons */
         .button-group {
             display: flex;
@@ -584,6 +738,10 @@
                     <div class="step-circle">3</div>
                     <div class="step-label">Get Quote</div>
                 </div>
+                <div class="step" data-step="4" id="step4indicator" style="display: none;">
+                    <div class="step-circle">4</div>
+                    <div class="step-label">Book Appointment</div>
+                </div>
             </div>
         </div>
 
@@ -658,6 +816,22 @@
                 </div>
             </div>
 
+            <!-- Service Type Selector -->
+            <div class="service-type-selector">
+                <div class="service-option" data-service="shop" id="shopOption">
+                    <div class="service-badge">FREE</div>
+                    <div class="service-icon">🏪</div>
+                    <div class="service-title">Visit our shop</div>
+                    <div class="service-description">Repaired while you wait</div>
+                </div>
+                <div class="service-option" data-service="post" id="postOption">
+                    <div class="service-badge">FREE</div>
+                    <div class="service-icon">📦</div>
+                    <div class="service-title">Send device</div>
+                    <div class="service-description">Repair within 24 hours</div>
+                </div>
+            </div>
+
             <form id="quoteForm">
                 <div class="form-group">
                     <label for="firstName">First Name *</label>
@@ -711,9 +885,28 @@
 
                 <div class="button-group">
                     <button type="button" class="btn-secondary" id="backToRepair">Back</button>
-                    <button type="submit" class="btn-primary">Submit Request</button>
+                    <button type="button" class="btn-primary" id="continueFromQuote">Continue</button>
                 </div>
             </form>
+        </div>
+
+        <!-- Step 4: Book Appointment (Conditional) -->
+        <div id="step4" class="content-section">
+            <h1>Book an appointment</h1>
+            <p class="subtitle">Choose your preferred date and time</p>
+
+            <div class="date-time-container">
+                <div class="section-title">Select a date</div>
+                <div class="date-grid" id="dateGrid"></div>
+
+                <div class="section-title" style="margin-top: 32px;">Select a time slot</div>
+                <div class="time-grid" id="timeGrid"></div>
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="btn-secondary" id="backToQuote">Back</button>
+                <button type="button" class="btn-primary" id="submitAppointment" disabled>Confirm Appointment</button>
+            </div>
         </div>
 
         <!-- Success Message -->
@@ -735,6 +928,7 @@
                 stepDevice: 'Select Device',
                 stepRepair: 'Select Repair',
                 stepQuote: 'Get Quote',
+                stepAppointment: 'Book Appointment',
                 
                 // Step 1
                 titleDevice: 'Select your device',
@@ -766,6 +960,42 @@
                 summaryModel: 'Model',
                 summaryRepairs: 'Repairs',
                 
+                // Service Types
+                serviceShopTitle: 'Visit our shop',
+                serviceShopDesc: 'Repaired while you wait',
+                servicePostTitle: 'Send device',
+                servicePostDesc: 'Repair within 24 hours',
+                serviceBadge: 'FREE',
+                
+                // Step 4
+                titleAppointment: 'Book an appointment',
+                subtitleAppointment: 'Choose your preferred date and time',
+                labelSelectDate: 'Select a date',
+                labelSelectTime: 'Select a time slot',
+                
+                // Days of week
+                dayMon: 'Mon',
+                dayTue: 'Tue',
+                dayWed: 'Wed',
+                dayThu: 'Thu',
+                dayFri: 'Fri',
+                daySat: 'Sat',
+                daySun: 'Sun',
+                
+                // Months
+                monthJan: 'Jan',
+                monthFeb: 'Feb',
+                monthMar: 'Mar',
+                monthApr: 'Apr',
+                monthMay: 'May',
+                monthJun: 'Jun',
+                monthJul: 'Jul',
+                monthAug: 'Aug',
+                monthSep: 'Sep',
+                monthOct: 'Oct',
+                monthNov: 'Nov',
+                monthDec: 'Dec',
+                
                 // Form labels
                 labelFirstName: 'First Name',
                 labelLastName: 'Last Name',
@@ -794,6 +1024,7 @@
                 btnContinue: 'Continue',
                 btnBack: 'Back',
                 btnSubmit: 'Submit Request',
+                btnConfirmAppointment: 'Confirm Appointment',
                 btnStartNew: 'Start New Request',
                 
                 // Success
@@ -827,6 +1058,7 @@
                 stepDevice: 'Gerät wählen',
                 stepRepair: 'Reparatur wählen',
                 stepQuote: 'Angebot erhalten',
+                stepAppointment: 'Termin buchen',
                 
                 // Step 1
                 titleDevice: 'Wählen Sie Ihr Gerät',
@@ -858,6 +1090,42 @@
                 summaryModel: 'Modell',
                 summaryRepairs: 'Reparaturen',
                 
+                // Service Types
+                serviceShopTitle: 'Besuchen Sie unser Geschäft',
+                serviceShopDesc: 'Erledigt, während Sie warten',
+                servicePostTitle: 'Gerät versenden',
+                servicePostDesc: 'Reparatur binnen 24 Stunden',
+                serviceBadge: 'GRATIS',
+                
+                // Step 4
+                titleAppointment: 'Termin buchen',
+                subtitleAppointment: 'Wählen Sie Ihr bevorzugtes Datum und Ihre Uhrzeit',
+                labelSelectDate: 'Wählen Sie ein Datum',
+                labelSelectTime: 'Wählen Sie einen Zeitslot',
+                
+                // Days of week
+                dayMon: 'Mo',
+                dayTue: 'Di',
+                dayWed: 'Mi',
+                dayThu: 'Do',
+                dayFri: 'Fr',
+                daySat: 'Sa',
+                daySun: 'So',
+                
+                // Months
+                monthJan: 'Jan',
+                monthFeb: 'Feb',
+                monthMar: 'Mär',
+                monthApr: 'Apr',
+                monthMay: 'Mai',
+                monthJun: 'Jun',
+                monthJul: 'Jul',
+                monthAug: 'Aug',
+                monthSep: 'Sep',
+                monthOct: 'Okt',
+                monthNov: 'Nov',
+                monthDec: 'Dez',
+                
                 // Form labels
                 labelFirstName: 'Vorname',
                 labelLastName: 'Nachname',
@@ -886,6 +1154,7 @@
                 btnContinue: 'Weiter',
                 btnBack: 'Zurück',
                 btnSubmit: 'Anfrage senden',
+                btnConfirmAppointment: 'Termin bestätigen',
                 btnStartNew: 'Neue Anfrage starten',
                 
                 // Success
@@ -939,6 +1208,9 @@
             document.querySelectorAll('.step')[0].querySelector('.step-label').textContent = t('stepDevice');
             document.querySelectorAll('.step')[1].querySelector('.step-label').textContent = t('stepRepair');
             document.querySelectorAll('.step')[2].querySelector('.step-label').textContent = t('stepQuote');
+            if (document.querySelectorAll('.step')[3]) {
+                document.querySelectorAll('.step')[3].querySelector('.step-label').textContent = t('stepAppointment');
+            }
             
             // Step 1
             document.querySelector('#step1 h1').textContent = t('titleDevice');
@@ -959,6 +1231,21 @@
             document.querySelectorAll('.summary-label')[0].textContent = t('summaryDevice');
             document.querySelectorAll('.summary-label')[1].textContent = t('summaryModel');
             document.querySelectorAll('.summary-label')[2].textContent = t('summaryRepairs');
+            
+            // Service types
+            document.querySelector('#shopOption .service-title').textContent = t('serviceShopTitle');
+            document.querySelector('#shopOption .service-description').textContent = t('serviceShopDesc');
+            document.querySelector('#postOption .service-title').textContent = t('servicePostTitle');
+            document.querySelector('#postOption .service-description').textContent = t('servicePostDesc');
+            document.querySelectorAll('.service-badge').forEach(badge => {
+                badge.textContent = t('serviceBadge');
+            });
+            
+            // Step 4
+            document.querySelector('#step4 h1').textContent = t('titleAppointment');
+            document.querySelector('#step4 .subtitle').textContent = t('subtitleAppointment');
+            document.querySelectorAll('#step4 .section-title')[0].textContent = t('labelSelectDate');
+            document.querySelectorAll('#step4 .section-title')[1].textContent = t('labelSelectTime');
             
             // Form labels
             document.querySelector('label[for="firstName"]').textContent = t('labelFirstName') + ' *';
@@ -989,7 +1276,9 @@
             document.getElementById('backToDevice').textContent = t('btnBack');
             document.getElementById('nextToQuote').textContent = t('btnContinue');
             document.getElementById('backToRepair').textContent = t('btnBack');
-            document.querySelector('#quoteForm button[type="submit"]').textContent = t('btnSubmit');
+            document.getElementById('continueFromQuote').textContent = t('btnContinue');
+            document.getElementById('backToQuote').textContent = t('btnBack');
+            document.getElementById('submitAppointment').textContent = t('btnConfirmAppointment');
             
             // Success
             document.querySelector('.success-title').textContent = t('successTitle');
@@ -1007,6 +1296,10 @@
             renderRepairs();
             if (selectedRepairs.length > 0) {
                 updateSelectedRepairsDisplay();
+            }
+            if (selectedDate) {
+                renderDatePicker();
+                renderTimePicker();
             }
         }
 
@@ -1176,6 +1469,9 @@
         let selectedModel = null;
         let deviceText = null;
         let selectedRepairs = [];
+        let serviceType = null; // 'shop' or 'post'
+        let selectedDate = null;
+        let selectedTime = null;
 
         // Initialize
         function init() {
@@ -1317,6 +1613,93 @@
             document.getElementById('nextToRepair').disabled = false;
         }
 
+        // Generate available dates (next 14 days)
+        function generateDates() {
+            const dates = [];
+            const today = new Date();
+            
+            for (let i = 1; i <= 14; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() + i);
+                dates.push(date);
+            }
+            
+            return dates;
+        }
+
+        // Generate time slots
+        function generateTimeSlots() {
+            return [
+                '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+                '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+                '15:00', '15:30', '16:00', '16:30', '17:00', '17:30'
+            ];
+        }
+
+        function renderDatePicker() {
+            const dates = generateDates();
+            const grid = document.getElementById('dateGrid');
+            const dayNames = ['daySun', 'dayMon', 'dayTue', 'dayWed', 'dayThu', 'dayFri', 'daySat'];
+            const monthNames = ['monthJan', 'monthFeb', 'monthMar', 'monthApr', 'monthMay', 'monthJun',
+                               'monthJul', 'monthAug', 'monthSep', 'monthOct', 'monthNov', 'monthDec'];
+            
+            grid.innerHTML = dates.map(date => {
+                const dateStr = date.toISOString().split('T')[0];
+                return `
+                    <div class="date-card" data-date="${dateStr}">
+                        <div class="date-day">${t(dayNames[date.getDay()])}</div>
+                        <div class="date-number">${date.getDate()}</div>
+                        <div class="date-month">${t(monthNames[date.getMonth()])}</div>
+                    </div>
+                `;
+            }).join('');
+
+            grid.querySelectorAll('.date-card').forEach(card => {
+                card.addEventListener('click', () => selectDate(card.dataset.date));
+            });
+        }
+
+        function selectDate(date) {
+            selectedDate = date;
+            selectedTime = null; // Reset time when date changes
+            
+            document.querySelectorAll('.date-card').forEach(c => c.classList.remove('selected'));
+            document.querySelector(`[data-date="${date}"]`).classList.add('selected');
+            
+            renderTimePicker();
+            document.getElementById('submitAppointment').disabled = true;
+        }
+
+        function renderTimePicker() {
+            const times = generateTimeSlots();
+            const grid = document.getElementById('timeGrid');
+            
+            grid.innerHTML = times.map(time => {
+                // Randomly mark some slots as unavailable for demo purposes
+                const isAvailable = Math.random() > 0.3;
+                const unavailableClass = isAvailable ? '' : ' unavailable';
+                
+                return `
+                    <div class="time-card${unavailableClass}" data-time="${time}">
+                        ${time}
+                    </div>
+                `;
+            }).join('');
+
+            grid.querySelectorAll('.time-card:not(.unavailable)').forEach(card => {
+                card.addEventListener('click', () => selectTime(card.dataset.time));
+            });
+        }
+
+        function selectTime(time) {
+            selectedTime = time;
+            
+            document.querySelectorAll('.time-card').forEach(c => c.classList.remove('selected'));
+            document.querySelector(`[data-time="${time}"]`).classList.add('selected');
+            
+            document.getElementById('submitAppointment').disabled = false;
+        }
+
         function renderRepairs() {
             const grid = document.getElementById('repairGrid');
             grid.innerHTML = repairs.map(repair => `
@@ -1370,6 +1753,7 @@
         function updateProgress(step) {
             const steps = document.querySelectorAll('.step');
             const progressFill = document.getElementById('progressFill');
+            const totalSteps = serviceType === 'shop' ? 4 : 3;
 
             steps.forEach(s => {
                 const stepNum = parseInt(s.dataset.step);
@@ -1378,7 +1762,7 @@
                 if (stepNum === step) s.classList.add('active');
             });
 
-            const progress = ((step - 1) / 2) * 100;
+            const progress = ((step - 1) / (totalSteps - 1)) * 100;
             progressFill.style.width = `${progress}%`;
         }
 
@@ -1419,6 +1803,26 @@
                 });
             });
 
+            // Service type selection
+            document.querySelectorAll('.service-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    serviceType = option.dataset.service;
+                    document.querySelectorAll('.service-option').forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    
+                    // Show/hide step 4 indicator based on service type
+                    const step4indicator = document.getElementById('step4indicator');
+                    if (serviceType === 'shop') {
+                        step4indicator.style.display = 'flex';
+                    } else {
+                        step4indicator.style.display = 'none';
+                    }
+                    
+                    // Enable continue button
+                    document.getElementById('continueFromQuote').disabled = false;
+                });
+            });
+
             document.getElementById('nextToRepair').addEventListener('click', () => {
                 goToStep(2);
             });
@@ -1436,33 +1840,63 @@
                 goToStep(2);
             });
 
-            document.getElementById('quoteForm').addEventListener('submit', (e) => {
-                e.preventDefault();
+            document.getElementById('continueFromQuote').addEventListener('click', () => {
+                // Validate form first
+                const form = document.getElementById('quoteForm');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
                 
-                // Here you would send data to backend
-                const formData = {
-                    device: selectedDevice,
-                    brand: selectedBrand,
-                    model: selectedModel,
-                    deviceText: deviceText,
-                    repairs: selectedRepairs,
-                    firstName: document.getElementById('firstName').value,
-                    lastName: document.getElementById('lastName').value,
-                    email: document.getElementById('email').value,
-                    phone: document.getElementById('phone').value,
-                    street: document.getElementById('street').value,
-                    houseNumber: document.getElementById('houseNumber').value,
-                    postalCode: document.getElementById('postalCode').value,
-                    city: document.getElementById('city').value,
-                    imei: document.getElementById('imei').value,
-                    notes: document.getElementById('notes').value
-                };
-
-                console.log('Form submitted:', formData);
-
-                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-                document.getElementById('success').classList.add('active');
+                if (serviceType === 'shop') {
+                    // Go to appointment booking
+                    renderDatePicker();
+                    goToStep(4);
+                } else {
+                    // Submit directly
+                    submitRequest();
+                }
             });
+
+            document.getElementById('backToQuote').addEventListener('click', () => {
+                goToStep(3);
+            });
+
+            document.getElementById('submitAppointment').addEventListener('click', () => {
+                submitRequest();
+            });
+        }
+
+        function submitRequest() {
+            // Collect form data
+            const formData = {
+                device: selectedDevice,
+                brand: selectedBrand,
+                model: selectedModel,
+                deviceText: deviceText,
+                repairs: selectedRepairs,
+                serviceType: serviceType,
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                street: document.getElementById('street').value,
+                houseNumber: document.getElementById('houseNumber').value,
+                postalCode: document.getElementById('postalCode').value,
+                city: document.getElementById('city').value,
+                imei: document.getElementById('imei').value,
+                notes: document.getElementById('notes').value
+            };
+
+            if (serviceType === 'shop') {
+                formData.appointmentDate = selectedDate;
+                formData.appointmentTime = selectedTime;
+            }
+
+            console.log('Form submitted:', formData);
+
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('success').classList.add('active');
         }
 
         init();
