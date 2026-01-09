@@ -613,10 +613,6 @@
             border-color: var(--accent);
         }
 
-        .category-icon {
-            font-size: 24px;
-        }
-
         .category-title {
             font-size: 17px;
             font-weight: 600;
@@ -1636,11 +1632,11 @@
         ];
 
         const repairCategories = [
-            { id: 'display', nameKey: 'categoryDisplay', icon: '📱' },
-            { id: 'accident', nameKey: 'categoryAccident', icon: '⚠️' },
-            { id: 'power', nameKey: 'categoryPower', icon: '🔋' },
-            { id: 'audio', nameKey: 'categoryAudio', icon: '🔊' },
-            { id: 'advanced', nameKey: 'categoryAdvanced', icon: '⚙️' }
+            { id: 'display', nameKey: 'categoryDisplay' },
+            { id: 'accident', nameKey: 'categoryAccident' },
+            { id: 'power', nameKey: 'categoryPower' },
+            { id: 'audio', nameKey: 'categoryAudio' },
+            { id: 'advanced', nameKey: 'categoryAdvanced' }
         ];
 
         // State
@@ -2101,7 +2097,6 @@
                 html += `
                     <div class="repair-category">
                         <div class="category-header" data-category="${category.id}">
-                            <div class="category-icon">${category.icon}</div>
                             <div class="category-title">${t(category.nameKey)}</div>
                             <div class="category-count">${countText}</div>
                             <div class="category-chevron">▼</div>
