@@ -269,6 +269,16 @@
             display: none;
         }
 
+        /* Other brands dropdown */
+        #otherBrandsDropdown {
+            margin-top: 20px;
+            display: none;
+        }
+
+        #otherBrandsDropdown.visible {
+            display: block;
+        }
+
         .card:hover .card-icon,
         .card.selected .card-icon {
             filter: grayscale(0%);
@@ -575,6 +585,94 @@
             color: var(--primary);
         }
 
+        /* Repair Categories */
+        .repair-category {
+            margin-bottom: 24px;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+
+        .category-header:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .category-header.active {
+            background: linear-gradient(135deg, rgba(0, 113, 227, 0.05), transparent);
+            border-color: var(--accent);
+        }
+
+        .category-icon {
+            font-size: 24px;
+        }
+
+        .category-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--primary);
+            flex: 1;
+        }
+
+        .category-count {
+            font-size: 14px;
+            color: var(--secondary);
+            background: var(--bg);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .category-header.active .category-count {
+            background: rgba(0, 113, 227, 0.1);
+            color: var(--accent);
+        }
+
+        .category-chevron {
+            font-size: 20px;
+            color: var(--secondary);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .category-header.active .category-chevron {
+            transform: rotate(180deg);
+            color: var(--accent);
+        }
+
+        .category-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .category-content.expanded {
+            max-height: 2000px;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+            padding: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .category-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 12px;
+            }
+        }
+
         /* Buttons */
         .button-group {
             display: flex;
@@ -754,6 +852,24 @@
             
             <!-- For Smartphones: Brand Selection -->
             <div id="brandGrid" class="grid" style="display: none;"></div>
+
+            <!-- Other Brands Dropdown -->
+            <div id="otherBrandsDropdown">
+                <div class="form-group">
+                    <label for="otherBrandSelect">Select other brand</label>
+                    <select id="otherBrandSelect">
+                        <option value="">Choose a brand...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Custom Brand Text Input -->
+            <div id="customBrandInput" style="display: none; margin-top: 20px;">
+                <div class="form-group">
+                    <label for="customBrandText">Enter brand name</label>
+                    <input type="text" id="customBrandText" placeholder="e.g., OnePlus, Xiaomi, etc.">
+                </div>
+            </div>
             
             <!-- For Smartphones: Model Dropdown -->
             <div id="modelDropdown" style="display: none; margin-bottom: 40px;">
@@ -762,6 +878,14 @@
                     <select id="modelSelect">
                         <option value="">Choose a model...</option>
                     </select>
+                </div>
+            </div>
+
+            <!-- Custom Model Text Input -->
+            <div id="customModelInput" style="display: none; margin-bottom: 40px;">
+                <div class="form-group">
+                    <label for="customModelText">Enter model name</label>
+                    <input type="text" id="customModelText" placeholder="e.g., Pro Max, Note 10, etc.">
                 </div>
             </div>
 
@@ -787,7 +911,7 @@
                 <div class="selected-repairs-text empty" id="selectedRepairsText">No repairs selected yet</div>
             </div>
 
-            <div class="grid" id="repairGrid"></div>
+            <div id="repairCategories"></div>
 
             <div class="button-group">
                 <button class="btn-secondary" id="backToDevice">Back</button>
@@ -915,7 +1039,7 @@
                 <div class="success-icon">✓</div>
                 <h2 class="success-title">Request Submitted!</h2>
                 <p class="success-text">We'll contact you shortly with a detailed quote and next steps.</p>
-                <button class="btn-primary" onclick="location.reload()">Start New Request</button>
+                <button class="btn-primary" onclick="window.location.href='/'">Back to homepage</button>
             </div>
         </div>
     </div>
@@ -944,8 +1068,17 @@
                 labelSelectModel: 'Select Model',
                 optionChooseModel: 'Choose a model...',
                 optionOtherModel: 'Other model (not in list)',
+                labelCustomModel: 'Enter model name',
+                placeholderCustomModel: 'e.g., Pro Max, Note 10, etc.',
                 labelDeviceText: 'Please specify your device',
                 placeholderDeviceText: 'e.g., MacBook Pro 2021, Apple Watch Series 8',
+                labelOtherBrand: 'Select other brand',
+                optionChooseBrand: 'Choose a brand...',
+                optionBrandNotInList: 'Not in list',
+                labelCustomBrand: 'Enter brand name',
+                placeholderCustomBrand: 'e.g., OnePlus, Xiaomi, etc.',
+                otherBrandCard: 'Other',
+                otherBrandCardDesc: 'More brands',
                 
                 // Step 2
                 titleRepair: 'What needs fixing?',
@@ -1025,7 +1158,7 @@
                 btnBack: 'Back',
                 btnSubmit: 'Submit Request',
                 btnConfirmAppointment: 'Confirm Appointment',
-                btnStartNew: 'Start New Request',
+                btnBackHome: 'Back to homepage',
                 
                 // Success
                 successTitle: 'Request Submitted!',
@@ -1051,7 +1184,14 @@
                 repairSIM: 'SIM Card Tray',
                 repairWiFi: 'WiFi/Bluetooth',
                 repairTouchID: 'Touch ID',
-                repairCheckup: 'General Checkup'
+                repairCheckup: 'General Checkup',
+                
+                // Repair Categories
+                categoryDisplay: 'Display & Touch',
+                categoryAccident: 'Accident & Physical Damage',
+                categoryPower: 'Power & Charging',
+                categoryAudio: 'Audio & Connectivity',
+                categoryAdvanced: 'Advanced & Internal',
             },
             de: {
                 // Progress Steps
@@ -1074,8 +1214,17 @@
                 labelSelectModel: 'Modell auswählen',
                 optionChooseModel: 'Wählen Sie ein Modell...',
                 optionOtherModel: 'Anderes Modell (nicht in der Liste)',
+                labelCustomModel: 'Modellnamen eingeben',
+                placeholderCustomModel: 'z.B. Pro Max, Note 10, usw.',
                 labelDeviceText: 'Bitte geben Sie Ihr Gerät an',
                 placeholderDeviceText: 'z.B. MacBook Pro 2021, Apple Watch Series 8',
+                labelOtherBrand: 'Andere Marke auswählen',
+                optionChooseBrand: 'Wählen Sie eine Marke...',
+                optionBrandNotInList: 'Nicht in der Liste',
+                labelCustomBrand: 'Markennamen eingeben',
+                placeholderCustomBrand: 'z.B. OnePlus, Xiaomi, usw.',
+                otherBrandCard: 'Andere',
+                otherBrandCardDesc: 'Weitere Marken',
                 
                 // Step 2
                 titleRepair: 'Was muss repariert werden?',
@@ -1155,7 +1304,7 @@
                 btnBack: 'Zurück',
                 btnSubmit: 'Anfrage senden',
                 btnConfirmAppointment: 'Termin bestätigen',
-                btnStartNew: 'Neue Anfrage starten',
+                btnBackHome: 'Zurück zur Startseite',
                 
                 // Success
                 successTitle: 'Anfrage gesendet!',
@@ -1181,7 +1330,14 @@
                 repairSIM: 'SIM-Kartenfach',
                 repairWiFi: 'WLAN/Bluetooth',
                 repairTouchID: 'Touch ID',
-                repairCheckup: 'Allgemeine Überprüfung'
+                repairCheckup: 'Allgemeine Überprüfung',
+                
+                // Repair Categories
+                categoryDisplay: 'Display & Touch',
+                categoryAccident: 'Unfall & Physische Schäden',
+                categoryPower: 'Strom & Laden',
+                categoryAudio: 'Audio & Konnektivität',
+                categoryAdvanced: 'Erweitert & Intern',
             }
         };
 
@@ -1283,7 +1439,7 @@
             // Success
             document.querySelector('.success-title').textContent = t('successTitle');
             document.querySelector('.success-text').textContent = t('successText');
-            document.querySelector('#success button').textContent = t('btnStartNew');
+            document.querySelector('#success button').textContent = t('btnBackHome');
             
             // Re-render dynamic content
             if (selectedDevice) {
@@ -1291,6 +1447,8 @@
                 if (devices.find(d => d.id === selectedDevice)?.hasModels && selectedBrand) {
                     renderBrands();
                     renderModels(selectedBrand);
+                } else if (devices.find(d => d.id === selectedDevice)?.hasModels) {
+                    renderBrands();
                 }
             }
             renderRepairs();
@@ -1312,34 +1470,39 @@
         ];
 
         // Smartphone brands extracted from CSV
-        const smartphoneBrands = [
+        const featuredBrands = [
             { id: 'apple', name: 'Apple', icon: '🍎' },
-            { id: 'samsung', name: 'Samsung', icon: '📱' },
-            { id: 'google', name: 'Google', icon: '🔍' },
-            { id: 'xiaomi', name: 'Xiaomi', icon: '📱' },
-            { id: 'oneplus', name: 'OnePlus', icon: '1️⃣' },
-            { id: 'oppo', name: 'Oppo', icon: '📱' },
-            { id: 'vivo', name: 'Vivo', icon: '📱' },
-            { id: 'motorola', name: 'Motorola', icon: '📱' },
-            { id: 'sony', name: 'Sony', icon: '🎮' },
-            { id: 'realme', name: 'Realme', icon: '📱' },
-            { id: 'nokia', name: 'Nokia', icon: '📱' },
             { id: 'asus', name: 'Asus', icon: '🎮' },
-            { id: 'nothing', name: 'Nothing', icon: '⚡' },
-            { id: 'honor', name: 'Honor', icon: '📱' },
-            { id: 'huawei', name: 'Huawei', icon: '📱' },
-            { id: 'tecno', name: 'Tecno', icon: '📱' },
-            { id: 'infinix', name: 'Infinix', icon: '📱' },
-            { id: 'poco', name: 'Poco', icon: '📱' },
-            { id: 'alcatel', name: 'Alcatel', icon: '📱' },
             { id: 'blackberry', name: 'BlackBerry', icon: '⌨️' },
             { id: 'cat', name: 'CAT', icon: '🏗️' },
             { id: 'fairphone', name: 'Fairphone', icon: '♻️' },
+            { id: 'google', name: 'Google', icon: '🔍' },
             { id: 'htc', name: 'HTC', icon: '📱' },
+            { id: 'huawei', name: 'Huawei', icon: '📱' },
+            { id: 'infinix', name: 'Infinix', icon: '📱' },
             { id: 'lenovo', name: 'Lenovo', icon: '💻' },
             { id: 'lg', name: 'LG', icon: '📱' },
-            { id: 'microsoft', name: 'Microsoft', icon: '🪟' }
+            { id: 'microsoft', name: 'Microsoft', icon: '🪟' },
+            { id: 'motorola', name: 'Motorola', icon: '📱' },
+            { id: 'nokia', name: 'Nokia', icon: '📱' },
+            { id: 'oppo', name: 'Oppo', icon: '📱' },
+            { id: 'realme', name: 'Realme', icon: '📱' },
+            { id: 'samsung', name: 'Samsung', icon: '📱' },
+            { id: 'sony', name: 'Sony', icon: '🎮' },
+            { id: 'vivo', name: 'Vivo', icon: '📱' },
+            { id: 'xiaomi', name: 'Xiaomi', icon: '📱' }
         ];
+
+        const otherBrands = [
+            { id: 'honor', name: 'Honor', icon: '📱' },
+            { id: 'nothing', name: 'Nothing', icon: '⚡' },
+            { id: 'oneplus', name: 'OnePlus', icon: '1️⃣' },
+            { id: 'poco', name: 'Poco', icon: '📱' },
+            { id: 'tecno', name: 'Tecno', icon: '📱' },
+            { id: 'alcatel', name: 'Alcatel', icon: '📱' }
+        ];
+
+        const smartphoneBrands = [...featuredBrands, ...otherBrands];
 
         // Smartphone models by brand (from CSV)
         const smartphoneModels = {
@@ -1441,26 +1604,43 @@
         };
 
         const repairs = [
-            { id: 1, nameKey: 'repairScreen', icon: '🔧' },
-            { id: 2, nameKey: 'repairBattery', icon: '🔋' },
-            { id: 3, nameKey: 'repairWater', icon: '💧' },
-            { id: 4, nameKey: 'repairCamera', icon: '📷' },
-            { id: 5, nameKey: 'repairCharging', icon: '⚡' },
-            { id: 6, nameKey: 'repairSpeaker', icon: '🔊' },
-            { id: 7, nameKey: 'repairButton', icon: '🔘' },
-            { id: 8, nameKey: 'repairBackGlass', icon: '🪟' },
-            { id: 9, nameKey: 'repairSoftware', icon: '💾' },
-            { id: 10, nameKey: 'repairData', icon: '💿' },
-            { id: 11, nameKey: 'repairMicrophone', icon: '🎤' },
-            { id: 12, nameKey: 'repairFaceID', icon: '👤' },
-            { id: 13, nameKey: 'repairMotherboard', icon: '🖥️' },
-            { id: 14, nameKey: 'repairAntenna', icon: '📡' },
-            { id: 15, nameKey: 'repairVibration', icon: '📳' },
-            { id: 16, nameKey: 'repairHome', icon: '⏺️' },
-            { id: 17, nameKey: 'repairSIM', icon: '📇' },
-            { id: 18, nameKey: 'repairWiFi', icon: '📶' },
-            { id: 19, nameKey: 'repairTouchID', icon: '👆' },
-            { id: 20, nameKey: 'repairCheckup', icon: '🔍' }
+            // Display & Touch
+            { id: 1, nameKey: 'repairScreen', icon: '🔧', category: 'display' },
+            { id: 19, nameKey: 'repairTouchID', icon: '👆', category: 'display' },
+            { id: 12, nameKey: 'repairFaceID', icon: '👤', category: 'display' },
+            
+            // Accident & Physical Damage
+            { id: 3, nameKey: 'repairWater', icon: '💧', category: 'accident' },
+            { id: 8, nameKey: 'repairBackGlass', icon: '🪟', category: 'accident' },
+            { id: 7, nameKey: 'repairButton', icon: '🔘', category: 'accident' },
+            { id: 16, nameKey: 'repairHome', icon: '⏺️', category: 'accident' },
+            
+            // Power & Charging
+            { id: 2, nameKey: 'repairBattery', icon: '🔋', category: 'power' },
+            { id: 5, nameKey: 'repairCharging', icon: '⚡', category: 'power' },
+            
+            // Audio & Connectivity
+            { id: 6, nameKey: 'repairSpeaker', icon: '🔊', category: 'audio' },
+            { id: 11, nameKey: 'repairMicrophone', icon: '🎤', category: 'audio' },
+            { id: 4, nameKey: 'repairCamera', icon: '📷', category: 'audio' },
+            { id: 18, nameKey: 'repairWiFi', icon: '📶', category: 'audio' },
+            { id: 14, nameKey: 'repairAntenna', icon: '📡', category: 'audio' },
+            { id: 17, nameKey: 'repairSIM', icon: '📇', category: 'audio' },
+            
+            // Advanced & Internal
+            { id: 9, nameKey: 'repairSoftware', icon: '💾', category: 'advanced' },
+            { id: 10, nameKey: 'repairData', icon: '💿', category: 'advanced' },
+            { id: 13, nameKey: 'repairMotherboard', icon: '🖥️', category: 'advanced' },
+            { id: 15, nameKey: 'repairVibration', icon: '📳', category: 'advanced' },
+            { id: 20, nameKey: 'repairCheckup', icon: '🔍', category: 'advanced' }
+        ];
+
+        const repairCategories = [
+            { id: 'display', nameKey: 'categoryDisplay', icon: '📱' },
+            { id: 'accident', nameKey: 'categoryAccident', icon: '⚠️' },
+            { id: 'power', nameKey: 'categoryPower', icon: '🔋' },
+            { id: 'audio', nameKey: 'categoryAudio', icon: '🔊' },
+            { id: 'advanced', nameKey: 'categoryAdvanced', icon: '⚙️' }
         ];
 
         // State
@@ -1472,6 +1652,8 @@
         let serviceType = null; // 'shop' or 'post'
         let selectedDate = null;
         let selectedTime = null;
+        let customBrandName = null;
+        let customModelName = null;
 
         // Initialize
         function init() {
@@ -1525,7 +1707,9 @@
         function renderBrands() {
             const grid = document.getElementById('brandGrid');
             grid.style.display = 'grid';
-            grid.innerHTML = smartphoneBrands.map(brand => `
+            
+            // Render featured brands as cards
+            const brandCards = featuredBrands.map(brand => `
                 <div class="card" data-brand="${brand.id}">
                     <img class="card-logo" 
                          src="logos/${brand.id}.svg" 
@@ -1535,17 +1719,173 @@
                 </div>
             `).join('');
 
-            grid.querySelectorAll('.card').forEach(card => {
-                card.addEventListener('click', () => selectBrand(card.dataset.brand));
+            // Add "Other" card
+            const otherCard = `
+                <div class="card" id="otherBrandCard">
+                    <div class="card-icon">📱</div>
+                    <div class="card-title">${t('otherBrandCard')}</div>
+                    <div class="card-subtitle">${t('otherBrandCardDesc')}</div>
+                </div>
+            `;
+
+            grid.innerHTML = brandCards + otherCard;
+
+            // Add click listeners to featured brand cards
+            grid.querySelectorAll('.card[data-brand]').forEach(card => {
+                card.addEventListener('click', () => {
+                    selectBrand(card.dataset.brand);
+                    document.getElementById('otherBrandsDropdown').classList.remove('visible');
+                });
             });
+
+            // Add click listener to "Other" card
+            document.getElementById('otherBrandCard').addEventListener('click', () => {
+                showOtherBrandsDropdown();
+            });
+
+            // Populate other brands dropdown
+            populateOtherBrandsDropdown();
+        }
+
+        function populateOtherBrandsDropdown() {
+            const select = document.getElementById('otherBrandSelect');
+            let optionsHTML = `<option value="">${t('optionChooseBrand')}</option>`;
+            
+            otherBrands.forEach(brand => {
+                optionsHTML += `<option value="${brand.id}">${brand.name}</option>`;
+            });
+            
+            // Add "Not in list" option
+            optionsHTML += `<option value="custom">${t('optionBrandNotInList')}</option>`;
+            
+            select.innerHTML = optionsHTML;
+            
+            // Update label
+            document.querySelector('label[for="otherBrandSelect"]').textContent = t('labelOtherBrand');
+            
+            // Remove existing listener
+            const newSelect = select.cloneNode(true);
+            select.parentNode.replaceChild(newSelect, select);
+            
+            // Add change listener
+            document.getElementById('otherBrandSelect').addEventListener('change', (e) => {
+                const value = e.target.value;
+                
+                if (value === 'custom') {
+                    // Show custom brand input
+                    showCustomBrandInput();
+                } else if (value) {
+                    // Hide custom brand input
+                    document.getElementById('customBrandInput').style.display = 'none';
+                    customBrandName = null;
+                    
+                    selectBrand(value);
+                    // Deselect all brand cards
+                    document.querySelectorAll('#brandGrid .card').forEach(c => c.classList.remove('selected'));
+                    // Select the "Other" card
+                    document.getElementById('otherBrandCard').classList.add('selected');
+                } else {
+                    // Nothing selected
+                    document.getElementById('customBrandInput').style.display = 'none';
+                    customBrandName = null;
+                    selectedBrand = null;
+                    selectedModel = null;
+                    document.getElementById('modelDropdown').style.display = 'none';
+                    document.getElementById('nextToRepair').disabled = true;
+                }
+            });
+        }
+
+        function showCustomBrandInput() {
+            const customInput = document.getElementById('customBrandInput');
+            customInput.style.display = 'block';
+            
+            const input = document.getElementById('customBrandText');
+            input.value = '';
+            
+            // Update label and placeholder
+            document.querySelector('label[for="customBrandText"]').textContent = t('labelCustomBrand');
+            input.placeholder = t('placeholderCustomBrand');
+            
+            input.focus();
+            
+            // Hide model dropdown initially
+            document.getElementById('modelDropdown').style.display = 'none';
+            selectedModel = null;
+            document.getElementById('nextToRepair').disabled = true;
+            
+            // Remove existing listener
+            const newInput = input.cloneNode(true);
+            input.parentNode.replaceChild(newInput, input);
+            
+            // Add input listener
+            document.getElementById('customBrandText').addEventListener('input', (e) => {
+                customBrandName = e.target.value.trim();
+                
+                if (customBrandName) {
+                    // Use custom brand as the selected brand
+                    selectedBrand = 'custom';
+                    // Show model dropdown with "Other" pre-selected
+                    renderModels('custom');
+                    // Auto-select "Other" and show custom model input
+                    setTimeout(() => {
+                        document.getElementById('modelSelect').value = 'Other';
+                        selectModel('Other');
+                    }, 100);
+                } else {
+                    selectedBrand = null;
+                    selectedModel = null;
+                    customModelName = null;
+                    document.getElementById('modelDropdown').style.display = 'none';
+                    document.getElementById('customModelInput').style.display = 'none';
+                    document.getElementById('nextToRepair').disabled = true;
+                }
+            });
+        }
+
+        function showOtherBrandsDropdown() {
+            const dropdown = document.getElementById('otherBrandsDropdown');
+            dropdown.classList.add('visible');
+            
+            // Hide custom brand input
+            document.getElementById('customBrandInput').style.display = 'none';
+            customBrandName = null;
+            
+            // Deselect all featured brand cards
+            document.querySelectorAll('#brandGrid .card[data-brand]').forEach(c => c.classList.remove('selected'));
+            
+            // Select the "Other" card
+            document.getElementById('otherBrandCard').classList.add('selected');
+            
+            // Reset model selection
+            selectedModel = null;
+            document.getElementById('modelDropdown').style.display = 'none';
+            document.getElementById('nextToRepair').disabled = true;
+            
+            // Focus on dropdown
+            document.getElementById('otherBrandSelect').focus();
         }
 
         function selectBrand(brandId) {
             selectedBrand = brandId;
             selectedModel = null;
+            customModelName = null;
 
+            // Clear previous selections
             document.querySelectorAll('#brandGrid .card').forEach(c => c.classList.remove('selected'));
-            document.querySelector(`[data-brand="${brandId}"]`).classList.add('selected');
+            
+            // If it's a featured brand, select that card
+            const featuredCard = document.querySelector(`[data-brand="${brandId}"]`);
+            if (featuredCard) {
+                featuredCard.classList.add('selected');
+                document.getElementById('otherBrandsDropdown').classList.remove('visible');
+            } else {
+                // It's from the other brands dropdown
+                document.getElementById('otherBrandCard').classList.add('selected');
+            }
+
+            // Hide custom model input
+            document.getElementById('customModelInput').style.display = 'none';
 
             renderModels(brandId);
             document.getElementById('nextToRepair').disabled = true;
@@ -1571,13 +1911,19 @@
         }
 
         function renderModels(brandId) {
-            const brand = smartphoneBrands.find(b => b.id === brandId);
             const modelDropdown = document.getElementById('modelDropdown');
             const modelSelect = document.getElementById('modelSelect');
             
             modelDropdown.style.display = 'block';
             
-            const models = smartphoneModels[brandId] || [];
+            let models = [];
+            
+            if (brandId === 'custom') {
+                // For custom brands, only show "Other" option
+                models = [];
+            } else {
+                models = smartphoneModels[brandId] || [];
+            }
             
             // Build options HTML
             let optionsHTML = `<option value="">${t('optionChooseModel')}</option>`;
@@ -1605,12 +1951,53 @@
         function selectModel(model) {
             if (!model) {
                 selectedModel = null;
+                customModelName = null;
+                document.getElementById('customModelInput').style.display = 'none';
                 document.getElementById('nextToRepair').disabled = true;
                 return;
             }
             
-            selectedModel = model;
-            document.getElementById('nextToRepair').disabled = false;
+            if (model === 'Other') {
+                selectedModel = 'Other';
+                showCustomModelInput();
+            } else {
+                selectedModel = model;
+                customModelName = null;
+                document.getElementById('customModelInput').style.display = 'none';
+                document.getElementById('nextToRepair').disabled = false;
+            }
+        }
+
+        function showCustomModelInput() {
+            const customInput = document.getElementById('customModelInput');
+            customInput.style.display = 'block';
+            
+            const input = document.getElementById('customModelText');
+            input.value = '';
+            
+            // Update label and placeholder
+            document.querySelector('label[for="customModelText"]').textContent = t('labelCustomModel');
+            input.placeholder = t('placeholderCustomModel');
+            
+            input.focus();
+            
+            // Disable continue button until model name is entered
+            document.getElementById('nextToRepair').disabled = true;
+            
+            // Remove existing listener
+            const newInput = input.cloneNode(true);
+            input.parentNode.replaceChild(newInput, input);
+            
+            // Add input listener
+            document.getElementById('customModelText').addEventListener('input', (e) => {
+                customModelName = e.target.value.trim();
+                
+                if (customModelName) {
+                    document.getElementById('nextToRepair').disabled = false;
+                } else {
+                    document.getElementById('nextToRepair').disabled = true;
+                }
+            });
         }
 
         // Generate available dates (next 14 days)
@@ -1630,24 +2017,25 @@
         // Generate time slots
         function generateTimeSlots() {
             return [
-                '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-                '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
-                '15:00', '15:30', '16:00', '16:30', '17:00', '17:30'
+                '09:00', '10:00', '11:00', '12:00', 
+                '13:00', '14:00', '15:00', '16:00', '17:00'
             ];
         }
 
         function renderDatePicker() {
             const dates = generateDates();
             const grid = document.getElementById('dateGrid');
+            // Monday as first day of week
             const dayNames = ['daySun', 'dayMon', 'dayTue', 'dayWed', 'dayThu', 'dayFri', 'daySat'];
             const monthNames = ['monthJan', 'monthFeb', 'monthMar', 'monthApr', 'monthMay', 'monthJun',
                                'monthJul', 'monthAug', 'monthSep', 'monthOct', 'monthNov', 'monthDec'];
             
             grid.innerHTML = dates.map(date => {
                 const dateStr = date.toISOString().split('T')[0];
+                const dayIndex = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
                 return `
                     <div class="date-card" data-date="${dateStr}">
-                        <div class="date-day">${t(dayNames[date.getDay()])}</div>
+                        <div class="date-day">${t(dayNames[dayIndex])}</div>
                         <div class="date-number">${date.getDate()}</div>
                         <div class="date-month">${t(monthNames[date.getMonth()])}</div>
                     </div>
@@ -1701,17 +2089,69 @@
         }
 
         function renderRepairs() {
-            const grid = document.getElementById('repairGrid');
-            grid.innerHTML = repairs.map(repair => `
-                <div class="card" data-repair="${repair.id}">
-                    <div class="card-icon">${repair.icon}</div>
-                    <div class="card-title">${t(repair.nameKey)}</div>
-                </div>
-            `).join('');
-
-            grid.querySelectorAll('.card').forEach(card => {
+            const container = document.getElementById('repairCategories');
+            
+            let html = '';
+            
+            repairCategories.forEach(category => {
+                const categoryRepairs = repairs.filter(r => r.category === category.id);
+                const selectedCount = categoryRepairs.filter(r => selectedRepairs.includes(String(r.id))).length;
+                const countText = selectedCount > 0 ? `${selectedCount}/${categoryRepairs.length}` : `${categoryRepairs.length}`;
+                
+                html += `
+                    <div class="repair-category">
+                        <div class="category-header" data-category="${category.id}">
+                            <div class="category-icon">${category.icon}</div>
+                            <div class="category-title">${t(category.nameKey)}</div>
+                            <div class="category-count">${countText}</div>
+                            <div class="category-chevron">▼</div>
+                        </div>
+                        <div class="category-content" data-category-content="${category.id}">
+                            <div class="category-grid">
+                                ${categoryRepairs.map(repair => `
+                                    <div class="card" data-repair="${repair.id}">
+                                        <div class="card-icon">${repair.icon}</div>
+                                        <div class="card-title">${t(repair.nameKey)}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            
+            // Add click listeners to category headers
+            container.querySelectorAll('.category-header').forEach(header => {
+                header.addEventListener('click', () => toggleCategory(header.dataset.category));
+            });
+            
+            // Add click listeners to all repair cards
+            container.querySelectorAll('.card').forEach(card => {
                 card.addEventListener('click', () => selectRepair(card.dataset.repair));
             });
+            
+            // Re-select previously selected repairs
+            selectedRepairs.forEach(repairId => {
+                const card = container.querySelector(`[data-repair="${repairId}"]`);
+                if (card) card.classList.add('selected');
+            });
+        }
+
+        function toggleCategory(categoryId) {
+            const header = document.querySelector(`[data-category="${categoryId}"]`);
+            const content = document.querySelector(`[data-category-content="${categoryId}"]`);
+            
+            const isExpanded = content.classList.contains('expanded');
+            
+            if (isExpanded) {
+                content.classList.remove('expanded');
+                header.classList.remove('active');
+            } else {
+                content.classList.add('expanded');
+                header.classList.add('active');
+            }
         }
 
         function selectRepair(repairId) {
@@ -1748,6 +2188,18 @@
                 displayElement.innerHTML = repairTags;
                 displayElement.classList.remove('empty');
             }
+            
+            // Update category counts
+            repairCategories.forEach(category => {
+                const categoryRepairs = repairs.filter(r => r.category === category.id);
+                const selectedCount = categoryRepairs.filter(r => selectedRepairs.includes(String(r.id))).length;
+                const countText = selectedCount > 0 ? `${selectedCount}/${categoryRepairs.length}` : `${categoryRepairs.length}`;
+                
+                const countElement = document.querySelector(`[data-category="${category.id}"] .category-count`);
+                if (countElement) {
+                    countElement.textContent = countText;
+                }
+            });
         }
 
         function updateProgress(step) {
@@ -1786,8 +2238,26 @@
             
             // Handle different device selection types
             if (device.hasModels) {
-                const brand = smartphoneBrands.find(b => b.id === selectedBrand);
-                document.getElementById('summaryModel').textContent = `${brand.name} - ${selectedModel}`;
+                let brandName = '';
+                let modelName = '';
+                
+                if (selectedBrand === 'custom') {
+                    // Custom brand entered by user
+                    brandName = customBrandName;
+                } else {
+                    // Regular brand from list
+                    const brand = smartphoneBrands.find(b => b.id === selectedBrand);
+                    brandName = brand.name;
+                }
+                
+                if (selectedModel === 'Other' && customModelName) {
+                    // Custom model entered by user
+                    modelName = customModelName;
+                } else {
+                    modelName = selectedModel;
+                }
+                
+                document.getElementById('summaryModel').textContent = `${brandName} - ${modelName}`;
             } else {
                 document.getElementById('summaryModel').textContent = deviceText;
             }
@@ -1871,8 +2341,10 @@
             // Collect form data
             const formData = {
                 device: selectedDevice,
-                brand: selectedBrand,
-                model: selectedModel,
+                brand: selectedBrand === 'custom' ? customBrandName : selectedBrand,
+                customBrand: customBrandName,
+                model: selectedModel === 'Other' && customModelName ? customModelName : selectedModel,
+                customModel: customModelName,
                 deviceText: deviceText,
                 repairs: selectedRepairs,
                 serviceType: serviceType,
