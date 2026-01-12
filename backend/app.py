@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from pymongo import MongoClient
 from datetime import datetime
+from bson.decimal128 import Decimal128
 import subprocess
 import logging
 
@@ -170,6 +171,10 @@ def handle_repair_request():
             
             # Add optional fields if provided
             if 'repairs' in data:
+                if 'repairs' in data:
+                    for repair in data['repairs']:
+                        if 'quotedPrice' in repair:
+                           repair['quotedPrice'] = Decimal128(str(repair['quotedPrice']))
                 repair_request['repairs'] = data['repairs']
             if 'appointment' in data:
                 # Convert date string to datetime object for MongoDB
