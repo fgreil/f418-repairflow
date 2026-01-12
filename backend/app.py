@@ -1,9 +1,11 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+from flask_cors import CORS
 from pymongo import MongoClient
 from datetime import datetime
 import subprocess
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
@@ -44,3 +46,51 @@ def get_excuse():
        return jsonify({"excuse": "Command not found"}), 500
     except Exception as e:
        return jsonify({"excuse": "Error: {str(e)}"}), 500
+
+
+@app.route("/repair_requests", methods=['POST'])
+def create_repair_request():
+    try:
+        data = request.get_json()
+        
+        # Create repair request document with required fields
+        repair_request = {
+            'customer': data['customer'],
+            'device': data['device'],
+            'serviceType': data['serviceType'],
+            'submittedAt': datetime.utcnow()
+        }
+        
+        # Add optional fields if provided
+        if 'repairs' in data:
+            repair_request['repairs'] = data['repairs']
+        if 'appointment' in data:
+            repair_request['appointment'] = data['appointment']
+        if 'status' in data:
+            repair_request['status'] = data['status']
+        if 'totalQuotedPrice' in data:
+            repair_request['totalQuotedPrice'] = data['totalQuotedPrice']
+        if 'totalActualPrice' in data:
+            repair_request['totalActualPrice'] = data['totalActualPrice']
+        if 'additionalNotes' in data:
+            repair_request['additionalNotes'] = data['additionalNotes']
+        
+        # Insert into MongoDB
+        result = db.repair_requests.insert_one(repair_request)
+        
+        return jsonify({
+            'success': True,
+            'id': str(result.inserted_id),
+            'message': 'Repair request created successfully'
+        }), 201
+        
+    except KeyError as e:
+        return jsonify({
+            'success': False,
+            'error': f'Missing required field: {str(e)}'
+        }), 400
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
