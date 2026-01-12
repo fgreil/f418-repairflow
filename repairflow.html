@@ -2332,38 +2332,134 @@
             });
         }
 
-        function submitRequest() {
-            // Collect form data
-            const formData = {
-                device: selectedDevice,
-                brand: selectedBrand === 'custom' ? customBrandName : selectedBrand,
-                customBrand: customBrandName,
-                model: selectedModel === 'Other' && customModelName ? customModelName : selectedModel,
-                customModel: customModelName,
-                deviceText: deviceText,
-                repairs: selectedRepairs,
-                serviceType: serviceType,
-                firstName: document.getElementById('firstName').value,
-                lastName: document.getElementById('lastName').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                street: document.getElementById('street').value,
-                houseNumber: document.getElementById('houseNumber').value,
-                postalCode: document.getElementById('postalCode').value,
-                city: document.getElementById('city').value,
-                imei: document.getElementById('imei').value,
-                notes: document.getElementById('notes').value
-            };
+        async function submitRequest() {
+            // Show loading state
+            const submitBtn = serviceType === 'shop' 
+                ? document.getElementById('submitAppointment')
+                : document.getElementById('continueFromQuote');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
 
-            if (serviceType === 'shop') {
-                formData.appointmentDate = selectedDate;
-                formData.appointmentTime = selectedTime;
+            try {
+                // Prepare data in the format expected by the API
+                const requestData = {
+                    customer: {
+                        name: `${document.getElementById('firstName').value} ${document.getElementById('lastName').value}`,
+                        firstName: document.getElementById('firstName').value,
+                        lastName: document.getElementById('lastName').value,
+                        email: document.getElementById('email').value,
+                        phone: document.getElementById('phone').value,
+                        address: {
+                            street: document.getElementById('street').value,
+                            houseNumber: document.getElementById('houseNumber').value,
+                            postalCode: document.getElementById('postalCode').value,
+                            city: document.getElementById('city').value
+                        }
+                    },
+                    device: {
+                        type: devices.find(d => d.id === selectedDevice)?.nameKey || selectedDevice,
+                        brand: selectedBrand === 'custom' ? customBrandName : selectedBrand,
+                        model: selectedModel === 'Other' && customModelName ? customModelName : selectedModel,
+                        deviceText: deviceText,
+                        imei: document.getElementById('imei').value || null
+                    },
+                    repairs: selectedRepairs.map(id => {
+                        const repair = repairs.find(r => r.id == id);
+                        return {
+                            id: id,
+                            name: repair.nameKey,
+                            category: repair.category
+                        };
+                    }),
+                    serviceType: serviceType,
+                    additionalNotes: document.getElementById('notes').value || null
+                };
+
+                // Add appointment if it's a shop service
+                if (serviceType === 'shop' && selectedDate && selectedTime) {
+                    requestData.appointment = {
+                        date: selectedDate,
+                        time: selectedTime
+                    };
+                }
+
+                // Submit to API
+                const response = await fetch('http://repair.f418.eu/request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Success - show success page with server data
+                    displaySuccess(result.id, result.submittedAt || new Date().toISOString());
+                } else {
+                    // Error from server
+                    displayError(result.error || 'Submission failed');
+                }
+
+            } catch (error) {
+                // Network or other error
+                console.error('Submission error:', error);
+                displayError(`Network error: ${error.message}`);
+            } finally {
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             }
+        }
 
-            console.log('Form submitted:', formData);
+        function displaySuccess(documentId, timestamp) {
+            // Update success message with real data from server
+            const successSection = document.getElementById('success');
+            
+            // Find or create elements to display the info
+            let infoDiv = successSection.querySelector('.server-info');
+            if (!infoDiv) {
+                infoDiv = document.createElement('div');
+                infoDiv.className = 'server-info';
+                infoDiv.style.cssText = 'margin: 30px 0; padding: 20px; background: var(--bg); border-radius: 12px; font-size: 15px;';
+                
+                // Insert after the success icon/title
+                const subtitle = successSection.querySelector('.subtitle');
+                if (subtitle) {
+                    subtitle.parentNode.insertBefore(infoDiv, subtitle.nextSibling);
+                }
+            }
+            
+            // Format timestamp
+            const date = new Date(timestamp);
+            const formattedTime = date.toLocaleString();
+            
+            infoDiv.innerHTML = `
+                <p style="margin-bottom: 10px;"><strong>Request ID:</strong> <code style="background: white; padding: 4px 8px; border-radius: 6px; font-family: monospace;">${documentId}</code></p>
+                <p><strong>Submitted at:</strong> ${formattedTime}</p>
+            `;
 
+            // Show success section
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-            document.getElementById('success').classList.add('active');
+            successSection.classList.add('active');
+        }
+
+        function displayError(errorMessage) {
+            // Show error message to user
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #ff3b30; color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; max-width: 500px;';
+            errorDiv.innerHTML = `
+                <strong>Submission Failed</strong><br>
+                ${errorMessage}
+            `;
+            document.body.appendChild(errorDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
         }
 
         init();
