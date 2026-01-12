@@ -2355,16 +2355,15 @@
             console.log('Button updated to Submitting...');
 
             try {
-                // Prepare data in the format expected by the API
+                // Prepare data in the format expected by the API/MongoDB
                 const requestData = {
                     customer: {
-                        name: `${document.getElementById('firstName').value} ${document.getElementById('lastName').value}`,
                         firstName: document.getElementById('firstName').value,
                         lastName: document.getElementById('lastName').value,
                         email: document.getElementById('email').value,
-                        phone: document.getElementById('phone').value,
+                        phoneNumber: document.getElementById('phone').value,  // Changed from 'phone' to 'phoneNumber'
                         address: {
-                            street: document.getElementById('street').value,
+                            streetName: document.getElementById('street').value,  // Changed from 'street' to 'streetName'
                             houseNumber: document.getElementById('houseNumber').value,
                             postalCode: document.getElementById('postalCode').value,
                             city: document.getElementById('city').value
@@ -2374,25 +2373,23 @@
                         type: devices.find(d => d.id === selectedDevice)?.nameKey || selectedDevice,
                         brand: selectedBrand === 'custom' ? customBrandName : selectedBrand,
                         model: selectedModel === 'Other' && customModelName ? customModelName : selectedModel,
-                        deviceText: deviceText,
-                        imei: document.getElementById('imei').value || null
+                        imei: document.getElementById('imei').value || undefined
                     },
                     repairs: selectedRepairs.map(id => {
                         const repair = repairs.find(r => r.id == id);
                         return {
-                            id: id,
-                            name: repair.nameKey,
-                            category: repair.category
+                            serviceName: repair.nameKey,  // Changed from 'name' to 'serviceName'
+                            quotedPrice: 0  // Added required field - you can update this with actual prices later
                         };
                     }),
-                    serviceType: serviceType,
-                    additionalNotes: document.getElementById('notes').value || null
+                    serviceType: serviceType === 'shop' ? 'walk-in' : 'send-in',  // Changed 'shop'/'post' to 'walk-in'/'send-in'
+                    additionalNotes: document.getElementById('notes').value || undefined
                 };
 
                 // Add appointment if it's a shop service
                 if (serviceType === 'shop' && selectedDate && selectedTime) {
                     requestData.appointment = {
-                        date: selectedDate,
+                        date: selectedDate,  // Keep as string, backend will convert
                         time: selectedTime
                     };
                 }
@@ -2400,7 +2397,7 @@
                 console.log('Sending request to API:', requestData);
 
                 // Submit to API
-                const response = await fetch('http://repair.f418.eu/request', {
+                const response = await fetch('https://repair.f418.eu/request', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
