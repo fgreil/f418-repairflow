@@ -846,29 +846,8 @@
             
             <div class="grid" id="deviceGrid"></div>
             
-            <!-- For Smartphones: Brand Selection -->
-            <div id="brandGrid" class="grid" style="display: none;"></div>
-
-            <!-- Other Brands Dropdown -->
-            <div id="otherBrandsDropdown">
-                <div class="form-group">
-                    <label for="otherBrandSelect">Select other brand</label>
-                    <select id="otherBrandSelect">
-                        <option value="">Choose a brand...</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Custom Brand Text Input -->
-            <div id="customBrandInput" style="display: none; margin-top: 20px;">
-                <div class="form-group">
-                    <label for="customBrandText">Enter brand name</label>
-                    <input type="text" id="customBrandText" placeholder="e.g., OnePlus, Xiaomi, etc.">
-                </div>
-            </div>
-            
-            <!-- For Smartphones: Model Dropdown -->
-            <div id="modelDropdown" style="display: none; margin-bottom: 40px;">
+            <!-- For Smartphones: Model Dropdown (appears after brand selection) -->
+            <div id="modelDropdown" style="display: none; margin: 30px 0;">
                 <div class="form-group">
                     <label for="modelSelect">Select Model</label>
                     <select id="modelSelect">
@@ -882,6 +861,27 @@
                 <div class="form-group">
                     <label for="customModelText">Enter model name</label>
                     <input type="text" id="customModelText" placeholder="e.g., Pro Max, Note 10, etc.">
+                </div>
+            </div>
+            
+            <!-- For Smartphones: Brand Selection -->
+            <div id="brandGrid" class="grid" style="display: none;"></div>
+
+            <!-- Other Brands Dropdown -->
+            <div id="otherBrandsDropdown" style="display: none;">
+                <div class="form-group">
+                    <label for="otherBrandSelect">Select other brand</label>
+                    <select id="otherBrandSelect">
+                        <option value="">Choose a brand...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Custom Brand Text Input -->
+            <div id="customBrandInput" style="display: none; margin-top: 20px;">
+                <div class="form-group">
+                    <label for="customBrandText">Enter brand name</label>
+                    <input type="text" id="customBrandText" placeholder="e.g., OnePlus, Xiaomi, etc.">
                 </div>
             </div>
 
@@ -1686,6 +1686,9 @@
             document.getElementById('brandGrid').style.display = 'none';
             document.getElementById('modelDropdown').style.display = 'none';
             document.getElementById('deviceTextInput').style.display = 'none';
+            document.getElementById('otherBrandsDropdown').style.display = 'none';
+            document.getElementById('customBrandInput').style.display = 'none';
+            document.getElementById('customModelInput').style.display = 'none';
 
             const device = devices.find(d => d.id === deviceId);
 
@@ -1730,7 +1733,7 @@
             grid.querySelectorAll('.card[data-brand]').forEach(card => {
                 card.addEventListener('click', () => {
                     selectBrand(card.dataset.brand);
-                    document.getElementById('otherBrandsDropdown').classList.remove('visible');
+                    document.getElementById('otherBrandsDropdown').style.display = 'none';
                 });
             });
 
@@ -1841,7 +1844,7 @@
 
         function showOtherBrandsDropdown() {
             const dropdown = document.getElementById('otherBrandsDropdown');
-            dropdown.classList.add('visible');
+            dropdown.style.display = 'block';
             
             // Hide custom brand input
             document.getElementById('customBrandInput').style.display = 'none';
@@ -1874,7 +1877,7 @@
             const featuredCard = document.querySelector(`[data-brand="${brandId}"]`);
             if (featuredCard) {
                 featuredCard.classList.add('selected');
-                document.getElementById('otherBrandsDropdown').classList.remove('visible');
+                document.getElementById('otherBrandsDropdown').style.display = 'none';
             } else {
                 // It's from the other brands dropdown
                 document.getElementById('otherBrandCard').classList.add('selected');
@@ -2318,8 +2321,8 @@
                     renderDatePicker();
                     goToStep(4);
                 } else {
-                    // Submit directly
-                    submitRequest();
+                    // Submit directly - call async function properly
+                    submitRequest().catch(err => console.error('Submit error:', err));
                 }
             });
 
@@ -2328,18 +2331,28 @@
             });
 
             document.getElementById('submitAppointment').addEventListener('click', () => {
-                submitRequest();
+                submitRequest().catch(err => console.error('Submit error:', err));
             });
         }
 
         async function submitRequest() {
+            console.log('submitRequest called');
+            
             // Show loading state
             const submitBtn = serviceType === 'shop' 
                 ? document.getElementById('submitAppointment')
                 : document.getElementById('continueFromQuote');
+            
+            if (!submitBtn) {
+                console.error('Submit button not found');
+                return;
+            }
+            
             const originalText = submitBtn.textContent;
             submitBtn.disabled = true;
             submitBtn.textContent = 'Submitting...';
+            
+            console.log('Button updated to Submitting...');
 
             try {
                 // Prepare data in the format expected by the API
@@ -2384,6 +2397,8 @@
                     };
                 }
 
+                console.log('Sending request to API:', requestData);
+
                 // Submit to API
                 const response = await fetch('http://repair.f418.eu/request', {
                     method: 'POST',
@@ -2393,7 +2408,10 @@
                     body: JSON.stringify(requestData)
                 });
 
+                console.log('Response status:', response.status);
+                
                 const result = await response.json();
+                console.log('Response data:', result);
 
                 if (response.ok && result.success) {
                     // Success - show success page with server data
@@ -2401,20 +2419,22 @@
                 } else {
                     // Error from server
                     displayError(result.error || 'Submission failed');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
                 }
 
             } catch (error) {
                 // Network or other error
                 console.error('Submission error:', error);
                 displayError(`Network error: ${error.message}`);
-            } finally {
-                // Reset button
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalText;
             }
         }
 
         function displaySuccess(documentId, timestamp) {
+            console.log('Displaying success:', documentId, timestamp);
+            
             // Update success message with real data from server
             const successSection = document.getElementById('success');
             
@@ -2426,9 +2446,9 @@
                 infoDiv.style.cssText = 'margin: 30px 0; padding: 20px; background: var(--bg); border-radius: 12px; font-size: 15px;';
                 
                 // Insert after the success icon/title
-                const subtitle = successSection.querySelector('.subtitle');
-                if (subtitle) {
-                    subtitle.parentNode.insertBefore(infoDiv, subtitle.nextSibling);
+                const successText = successSection.querySelector('.success-text');
+                if (successText) {
+                    successText.parentNode.insertBefore(infoDiv, successText.nextSibling);
                 }
             }
             
@@ -2447,6 +2467,8 @@
         }
 
         function displayError(errorMessage) {
+            console.log('Displaying error:', errorMessage);
+            
             // Show error message to user
             const errorDiv = document.createElement('div');
             errorDiv.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #ff3b30; color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; max-width: 500px;';
