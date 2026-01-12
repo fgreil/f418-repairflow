@@ -3,9 +3,30 @@ from flask_cors import CORS
 from pymongo import MongoClient
 from datetime import datetime
 import subprocess
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+
+# Enable CORS with explicit configuration
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"]
+    }
+})
+
+# Add request logging middleware
+@app.before_request
+def log_request():
+    logger.info(f"Request: {request.method} {request.path}")
+    logger.info(f"Headers: {dict(request.headers)}")
+    if request.method == 'POST':
+        logger.info(f"Body: {request.get_data(as_text=True)}")
 
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
@@ -135,7 +156,9 @@ def handle_repair_request():
     
     else:  # POST method
         try:
+            logger.info("POST /request - Processing repair request submission")
             data = request.get_json()
+            logger.info(f"Received data: {data}")
             
             # Create repair request document with required fields
             repair_request = {
@@ -149,7 +172,13 @@ def handle_repair_request():
             if 'repairs' in data:
                 repair_request['repairs'] = data['repairs']
             if 'appointment' in data:
-                repair_request['appointment'] = data['appointment']
+                # Convert date string to datetime object for MongoDB
+                appointment = data['appointment'].copy()
+                if 'date' in appointment and isinstance(appointment['date'], str):
+                    # Parse date string (format: YYYY-MM-DD)
+                    from datetime import datetime as dt
+                    appointment['date'] = dt.strptime(appointment['date'], '%Y-%m-%d')
+                repair_request['appointment'] = appointment
             if 'status' in data:
                 repair_request['status'] = data['status']
             if 'totalQuotedPrice' in data:
@@ -159,22 +188,37 @@ def handle_repair_request():
             if 'additionalNotes' in data:
                 repair_request['additionalNotes'] = data['additionalNotes']
             
+            logger.info(f"Inserting into MongoDB: {repair_request}")
             # Insert into MongoDB
             result = db.repair_requests.insert_one(repair_request)
+            logger.info(f"Successfully inserted with ID: {result.inserted_id}")
             
-            return jsonify({
+            response_data = {
                 'success': True,
                 'id': str(result.inserted_id),
-                'message': 'Repair request created successfully'
-            }), 201
+                'message': 'Repair request created successfully',
+                'submittedAt': repair_request['submittedAt'].isoformat()
+            }
+            logger.info(f"Sending response: {response_data}")
+            
+            return jsonify(response_data), 201
             
         except KeyError as e:
+            logger.error(f"Missing required field: {str(e)}")
             return jsonify({
                 'success': False,
                 'error': f'Missing required field: {str(e)}'
             }), 400
         except Exception as e:
+            logger.error(f"Error processing request: {str(e)}", exc_info=True)
             return jsonify({
                 'success': False,
                 'error': str(e)
             }), 500
+
+
+
+if __name__ == "__main__":
+    # Run the Flask development server
+    # For production, use a proper WSGI server like gunicorn
+    app.run(host="0.0.0.0", port=5001, debug=True)
