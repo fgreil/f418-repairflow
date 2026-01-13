@@ -14,6 +14,32 @@ For method `POST`, the admin can chancel or update an appointment. 
 The **endpoint `/appointments`** shows the same info as `/slots` additional details (for the admin): It answers who booked which slot with reference to the request-collection, 
 but also duplicates name, email, phone of the customer as well as as details on the device (brand, model, color, IMEI).
 
+## MongoDB side 
+Updating `app.py` is enough, MongoDB will handle the rest automatically. Two optional optimizations can be added later:
+* Indices for better query performance
+  ```
+  db.appointments.createIndex({ "datetime": 1, "status": 1 })
+  db.appointments.createIndex({ "requestId": 1 })
+  db.repair_requests.createIndex({ "customer.email": 1 })
+  db.repair_requests.createIndex({ "submittedAt": -1 })
+  ```
+* If you want MongoDB to enforce schema constraints you can enforce it with the following **validation rules**:
+  ```
+  db.createCollection("appointments", {
+     validator: {
+        $jsonSchema: {
+           required: ["datetime", "status", "customer", "device"],
+           properties: {
+              datetime: { bsonType: "date" },
+              status: { enum: ["booked", "confirmed", "completed", "cancelled", "no_show"] }
+           }
+        }
+     }
+  })
+  ```
+
+
+
 
 
 
