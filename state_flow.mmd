@@ -1,60 +1,51 @@
 flowchart LR
-
 %% Swimlane: Client
 subgraph CLIENT[Client]
     CPickup[pickup]
     CCollected[collected]
     CFeedback[feedback_received]
 end
-
 %% Swimlane: Repair Shop
 subgraph SHOP[Repair Shop]
     SStart([start])
     SPending[pending_quote]
     SQuoted[quoted]
     SConfirmed[confirmed]
-
     SScheduled[scheduled]
     SDiagnosing[diagnosing]
     SAwaiting[awaiting_parts]
     SInProgress[in_progress]
     SOnHold[on_hold]
     SReady[ready_for_pickup]
-
     Gateway{pickup or ship?}
-
     SCancelled[cancelled]
     SRejected[rejected]
 end
-
 %% Swimlane: Shipping
 subgraph SHIP[Shipping Company]
     STransit[in_transit]
 end
+%% Archive node (outside subgraphs)
+A[archived]
+End((end))
 
 %% Main flows
 SStart --> SPending --> SQuoted --> SConfirmed
 SConfirmed --> SScheduled --> SDiagnosing --> SAwaiting --> SInProgress
-
 SInProgress --> SOnHold --> SInProgress
 SInProgress --> SReady
 SReady --> Gateway
-
 Gateway -->|pickup| CPickup --> CCollected
 Gateway -->|ship| STransit --> CCollected
-
 CCollected --> CFeedback
-
 %% Outcome paths
-CFeedback -->|auto archive (3m)| A[archived]
-SRejected -->|auto archive (3m)| A
-SCancelled -->|auto archive (3m)| A
-
+CFeedback -->|auto archive 3m| A
+SRejected -->|auto archive 3m| A
+SCancelled -->|auto archive 3m| A
 %% Explicit rejections (e.g. before work)
 SQuoted --> SRejected
 SConfirmed --> SCancelled
 SScheduled --> SCancelled
 SDiagnosing --> SCancelled
-
 %% Final
-A --> End((end))
+A --> End
