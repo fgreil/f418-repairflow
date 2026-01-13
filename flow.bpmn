@@ -1,177 +1,411 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions
-    xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
-    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-    xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-    id="Definitions_MobilePhoneRepair"
-    targetNamespace="http://example.com/mobilephonerepair">
-
-  <bpmn:process
-      id="MobilePhoneRepairProcess"
-      name="Mobile Phone Repair Process"
-      isExecutable="false">
-
-    <!-- Lanes -->
-    <bpmn:laneSet id="LaneSet_Main">
-      <bpmn:lane id="Lane_Customer" name="Customer">
-        <bpmn:flowNodeRef>StartEvent_IssueReported</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Gateway_EstimateApproved</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>EndEvent_DeviceReturned</bpmn:flowNodeRef>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_Repair" targetNamespace="http://example.com/repair" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="18.10.1">
+  <bpmn:collaboration id="Collaboration_19x5bum">
+    <bpmn:participant id="Participant_0oyf7sm" name="Repair state flow" processRef="RepairProcess" />
+  </bpmn:collaboration>
+  <bpmn:process id="RepairProcess" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_1kju7z6">
+      <bpmn:lane id="Lane_1189m49" name="Client">
+        <bpmn:flowNodeRef>pending_quote</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>quoted</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_1h976xq</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>collected</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_16d9f4a</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>rejected</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>feedback_received</bpmn:flowNodeRef>
       </bpmn:lane>
-
-      <bpmn:lane id="Lane_RepairService" name="Repair Service">
-        <bpmn:flowNodeRef>Task_DeviceIntake</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Task_CreateEstimate</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Task_DiagnoseDevice</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Gateway_RepairFeasible</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Task_PerformRepair</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Task_TestDevice</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Task_DeclareUnrepairable</bpmn:flowNodeRef>
+      <bpmn:lane id="Lane_0tfzzqn" name="Package service">
+        <bpmn:flowNodeRef>awaiting_parts</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>in_transit</bpmn:flowNodeRef>
       </bpmn:lane>
-
-      <bpmn:lane id="Lane_System" name="System">
-        <bpmn:flowNodeRef>Task_GenerateInvoice</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Task_ProcessPayment</bpmn:flowNodeRef>
+      <bpmn:lane id="Lane_1r1m4v5" name="Workshop">
+        <bpmn:flowNodeRef>confirmed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>scheduled</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>diagnosing</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_18paal0</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>in_progress</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ready_for_pickup</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gateway_pickup_ship</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>archived</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>cancelled</bpmn:flowNodeRef>
       </bpmn:lane>
     </bpmn:laneSet>
-
-    <!-- Events -->
-    <bpmn:startEvent
-        id="StartEvent_IssueReported"
-        name="Issue reported"/>
-
-    <bpmn:endEvent
-        id="EndEvent_DeviceReturned"
-        name="Device returned to customer"/>
-
-    <!-- Tasks -->
-    <bpmn:task
-        id="Task_DeviceIntake"
-        name="Receive device and record details"/>
-
-    <bpmn:task
-        id="Task_CreateEstimate"
-        name="Create repair estimate"/>
-
-    <bpmn:task
-        id="Task_DiagnoseDevice"
-        name="Diagnose device"/>
-
-    <bpmn:task
-        id="Task_PerformRepair"
-        name="Perform repair"/>
-
-    <bpmn:task
-        id="Task_TestDevice"
-        name="Test device"/>
-
-    <bpmn:task
-        id="Task_DeclareUnrepairable"
-        name="Declare device unrepairable"/>
-
-    <bpmn:task
-        id="Task_GenerateInvoice"
-        name="Generate invoice"/>
-
-    <bpmn:task
-        id="Task_ProcessPayment"
-        name="Process payment"/>
-
-    <!-- Gateways -->
-    <bpmn:exclusiveGateway
-        id="Gateway_EstimateApproved"
-        name="Estimate approved?"/>
-
-    <bpmn:exclusiveGateway
-        id="Gateway_RepairFeasible"
-        name="Repair feasible?"/>
-
-    <bpmn:exclusiveGateway
-        id="Gateway_TestSuccessful"
-        name="Test successful?"/>
-
-    <!-- Sequence Flows -->
-    <bpmn:sequenceFlow
-        id="Flow_Start_To_Intake"
-        sourceRef="StartEvent_IssueReported"
-        targetRef="Task_DeviceIntake"/>
-
-    <bpmn:sequenceFlow
-        id="Flow_Intake_To_Estimate"
-        sourceRef="Task_DeviceIntake"
-        targetRef="Task_CreateEstimate"/>
-
-    <bpmn:sequenceFlow
-        id="Flow_Estimate_To_Approval"
-        sourceRef="Task_CreateEstimate"
-        targetRef="Gateway_EstimateApproved"/>
-
-    <bpmn:sequenceFlow
-        id="Flow_Approval_Yes"
-        name="Yes"
-        sourceRef="Gateway_EstimateApproved"
-        targetRef="Task_DiagnoseDevice"/>
-
-    <bpmn:sequenceFlow
-        id="Flow_Approval_No"
-        name="No"
-        sourceRef="Gateway_EstimateApproved"
-        targetRef="EndEvent_DeviceReturned"/>
-
-    <bpmn:sequenceFlow
-        id="Flow_Diagnose_To_Feasibility"
-        sourceRef="Task_DiagnoseDevice"
-        targetRef="Gateway_RepairFeasible"/>
-
-    <bpmn:sequenceFlow
-        id="Flow_Feasible_Yes"
-        name="Yes"
-        sourceRef="Gateway_RepairFeasible"
-        targetRef="Task_PerformRepair"/>
-
-    <bpmn:sequenceFlow
-        id="Flow_Feasible_No"
-        name="No"
-        sourceRef="Gateway_RepairFeasible"
-        targetRef="Task_DeclareUnrepairable"/>
-
-    <bpmn:sequenceFlow
-        id="Flow_Unrepairable_To_End"
-        sourceRef="Task_DeclareUnrepairable"
-        targetRef="EndEvent_DeviceReturned"/>
-
-    <bpmn:sequenceFlow
-        id="Flow_Repair_To_Test"
-        sourceRef="Task_PerformRepair"
-        targetRef="Task_TestDevice"/>
-
-    <bpmn:sequenceFlow
-        id="Flow_Test_To_Gateway"
-        sourceRef="Task_TestDevice"
-        targetRef="Gateway_TestSuccessful"/>
-
-    <bpmn:sequenceFlow
-        id="Flow_Test_Failed"
-        name="Failed"
-        sourceRef="Gateway_TestSuccessful"
-        targetRef="Task_PerformRepair"/>
-
-    <bpmn:sequenceFlow
-        id="Flow_Test_Passed"
-        name="Passed"
-        sourceRef="Gateway_TestSuccessful"
-        targetRef="Task_GenerateInvoice"/>
-
-    <bpmn:sequenceFlow
-        id="Flow_Invoice_To_Payment"
-        sourceRef="Task_GenerateInvoice"
-        targetRef="Task_ProcessPayment"/>
-
-    <bpmn:sequenceFlow
-        id="Flow_Payment_To_End"
-        sourceRef="Task_ProcessPayment"
-        targetRef="EndEvent_DeviceReturned"/>
-
+    <bpmn:sequenceFlow id="flow_start_pending" sourceRef="Start" targetRef="pending_quote" />
+    <bpmn:sequenceFlow id="flow_pending_quoted" sourceRef="pending_quote" targetRef="quoted" />
+    <bpmn:sequenceFlow id="flow_quoted_confirmed" sourceRef="quoted" targetRef="confirmed" />
+    <bpmn:sequenceFlow id="flow_confirmed_scheduled" sourceRef="confirmed" targetRef="scheduled" />
+    <bpmn:sequenceFlow id="flow_scheduled_diagnosing" sourceRef="scheduled" targetRef="diagnosing" />
+    <bpmn:sequenceFlow id="flow_diagnosing_awaiting" sourceRef="diagnosing" targetRef="awaiting_parts" />
+    <bpmn:sequenceFlow id="flow_awaiting_progress" sourceRef="awaiting_parts" targetRef="in_progress" />
+    <bpmn:sequenceFlow id="flow_progress_ready" sourceRef="in_progress" targetRef="ready_for_pickup" />
+    <bpmn:sequenceFlow id="flow_ready_gateway" sourceRef="ready_for_pickup" targetRef="gateway_pickup_ship" />
+    <bpmn:sequenceFlow id="flow_gateway_pickup" sourceRef="gateway_pickup_ship" targetRef="pickup" />
+    <bpmn:sequenceFlow id="flow_gateway_ship" sourceRef="gateway_pickup_ship" targetRef="in_transit" />
+    <bpmn:sequenceFlow id="flow_pickup_collected" sourceRef="pickup" targetRef="collected" />
+    <bpmn:sequenceFlow id="flow_transit_collected" sourceRef="in_transit" targetRef="collected" />
+    <bpmn:sequenceFlow id="flow_collected_feedback" sourceRef="collected" targetRef="feedback_received" />
+    <bpmn:sequenceFlow id="flow_feedback_archived" sourceRef="feedback_received" targetRef="archived" />
+    <bpmn:sequenceFlow id="flow_rejected_archived" sourceRef="rejected" targetRef="archived" />
+    <bpmn:sequenceFlow id="flow_cancelled_archived" sourceRef="cancelled" targetRef="archived" />
+    <bpmn:task id="confirmed" name="confirmed">
+      <bpmn:incoming>flow_quoted_confirmed</bpmn:incoming>
+      <bpmn:incoming>Flow_0aoeq7f</bpmn:incoming>
+      <bpmn:outgoing>flow_confirmed_scheduled</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1kds6gy</bpmn:outgoing>
+      <bpmn:outgoing>Flow_15d6rft</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="scheduled" name="scheduled">
+      <bpmn:incoming>flow_confirmed_scheduled</bpmn:incoming>
+      <bpmn:incoming>Flow_1kds6gy</bpmn:incoming>
+      <bpmn:outgoing>flow_scheduled_diagnosing</bpmn:outgoing>
+      <bpmn:outgoing>Flow_15znzx3</bpmn:outgoing>
+      <bpmn:outgoing>Flow_08j81uf</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="diagnosing" name="diagnosing">
+      <bpmn:incoming>flow_scheduled_diagnosing</bpmn:incoming>
+      <bpmn:incoming>Flow_15znzx3</bpmn:incoming>
+      <bpmn:outgoing>flow_diagnosing_awaiting</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0dw55fb</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1j8xx1t</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_18paal0" name="Parts necessary?">
+      <bpmn:incoming>Flow_0dw55fb</bpmn:incoming>
+      <bpmn:outgoing>Flow_0wv6483</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1cgg9jk</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="in_progress" name="in_progress">
+      <bpmn:incoming>flow_awaiting_progress</bpmn:incoming>
+      <bpmn:incoming>Flow_1cgg9jk</bpmn:incoming>
+      <bpmn:incoming>Flow_07jqn5m</bpmn:incoming>
+      <bpmn:outgoing>flow_progress_ready</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0sfrmvf</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="ready_for_pickup" name="ready_for_pickup">
+      <bpmn:incoming>flow_progress_ready</bpmn:incoming>
+      <bpmn:incoming>Flow_0sfrmvf</bpmn:incoming>
+      <bpmn:outgoing>flow_ready_gateway</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0ok33ch</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="gateway_pickup_ship" name="Pick-up?">
+      <bpmn:incoming>flow_ready_gateway</bpmn:incoming>
+      <bpmn:incoming>Flow_0ok33ch</bpmn:incoming>
+      <bpmn:outgoing>flow_gateway_pickup</bpmn:outgoing>
+      <bpmn:outgoing>flow_gateway_ship</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0mkgpyv</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0bwncw9</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="awaiting_parts" name="awaiting_parts">
+      <bpmn:incoming>flow_diagnosing_awaiting</bpmn:incoming>
+      <bpmn:incoming>Flow_0wv6483</bpmn:incoming>
+      <bpmn:outgoing>flow_awaiting_progress</bpmn:outgoing>
+      <bpmn:outgoing>Flow_07jqn5m</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="pending_quote" name="pending_quote">
+      <bpmn:incoming>flow_start_pending</bpmn:incoming>
+      <bpmn:incoming>Flow_118ehyu</bpmn:incoming>
+      <bpmn:outgoing>flow_pending_quoted</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1u5wwff</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:startEvent id="Start">
+      <bpmn:outgoing>flow_start_pending</bpmn:outgoing>
+      <bpmn:outgoing>Flow_118ehyu</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="quoted" name="quoted">
+      <bpmn:incoming>flow_pending_quoted</bpmn:incoming>
+      <bpmn:incoming>Flow_1u5wwff</bpmn:incoming>
+      <bpmn:outgoing>flow_quoted_confirmed</bpmn:outgoing>
+      <bpmn:outgoing>Flow_09wyltu</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_1h976xq" name="Accept quote?">
+      <bpmn:incoming>Flow_09wyltu</bpmn:incoming>
+      <bpmn:outgoing>Flow_0wf3d11</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0aoeq7f</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="in_transit" name="in_transit">
+      <bpmn:incoming>flow_gateway_ship</bpmn:incoming>
+      <bpmn:incoming>Flow_0mkgpyv</bpmn:incoming>
+      <bpmn:outgoing>flow_transit_collected</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1hmy11t</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="collected" name="collected">
+      <bpmn:incoming>flow_pickup_collected</bpmn:incoming>
+      <bpmn:incoming>flow_transit_collected</bpmn:incoming>
+      <bpmn:incoming>Flow_0bwncw9</bpmn:incoming>
+      <bpmn:incoming>Flow_1hmy11t</bpmn:incoming>
+      <bpmn:outgoing>flow_collected_feedback</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0h0sa5i</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Activity_16d9f4a" name="waiting for feedback">
+      <bpmn:incoming>Flow_0h0sa5i</bpmn:incoming>
+      <bpmn:outgoing>Flow_1gvo0u9</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="rejected" name="rejected">
+      <bpmn:incoming>Flow_0wf3d11</bpmn:incoming>
+      <bpmn:outgoing>Flow_0q3awiz</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="feedback_received" name="feedback_received">
+      <bpmn:incoming>flow_collected_feedback</bpmn:incoming>
+      <bpmn:incoming>Flow_1gvo0u9</bpmn:incoming>
+      <bpmn:outgoing>flow_feedback_archived</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0tjn2kd</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="archived" name="archived">
+      <bpmn:incoming>flow_feedback_archived</bpmn:incoming>
+      <bpmn:incoming>flow_rejected_archived</bpmn:incoming>
+      <bpmn:incoming>flow_cancelled_archived</bpmn:incoming>
+      <bpmn:incoming>Flow_0tjn2kd</bpmn:incoming>
+      <bpmn:incoming>Flow_0q3awiz</bpmn:incoming>
+      <bpmn:incoming>Flow_0sk9d0w</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:task id="cancelled" name="cancelled">
+      <bpmn:incoming>Flow_1j8xx1t</bpmn:incoming>
+      <bpmn:incoming>Flow_08j81uf</bpmn:incoming>
+      <bpmn:incoming>Flow_15d6rft</bpmn:incoming>
+      <bpmn:outgoing>Flow_0sk9d0w</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_0aoeq7f" name="yes" sourceRef="Gateway_1h976xq" targetRef="confirmed" />
+    <bpmn:sequenceFlow id="Flow_1kds6gy" sourceRef="confirmed" targetRef="scheduled" />
+    <bpmn:sequenceFlow id="Flow_15d6rft" sourceRef="confirmed" targetRef="cancelled" />
+    <bpmn:sequenceFlow id="Flow_15znzx3" sourceRef="scheduled" targetRef="diagnosing" />
+    <bpmn:sequenceFlow id="Flow_08j81uf" sourceRef="scheduled" targetRef="cancelled" />
+    <bpmn:sequenceFlow id="Flow_0dw55fb" sourceRef="diagnosing" targetRef="Gateway_18paal0" />
+    <bpmn:sequenceFlow id="Flow_1j8xx1t" sourceRef="diagnosing" targetRef="cancelled" />
+    <bpmn:sequenceFlow id="Flow_0wv6483" name="yes" sourceRef="Gateway_18paal0" targetRef="awaiting_parts" />
+    <bpmn:sequenceFlow id="Flow_1cgg9jk" name="no" sourceRef="Gateway_18paal0" targetRef="in_progress" />
+    <bpmn:sequenceFlow id="Flow_07jqn5m" sourceRef="awaiting_parts" targetRef="in_progress" />
+    <bpmn:sequenceFlow id="Flow_0sfrmvf" sourceRef="in_progress" targetRef="ready_for_pickup" />
+    <bpmn:sequenceFlow id="Flow_0ok33ch" sourceRef="ready_for_pickup" targetRef="gateway_pickup_ship" />
+    <bpmn:sequenceFlow id="Flow_0mkgpyv" name="no" sourceRef="gateway_pickup_ship" targetRef="in_transit" />
+    <bpmn:sequenceFlow id="Flow_0bwncw9" name="yes" sourceRef="gateway_pickup_ship" targetRef="collected" />
+    <bpmn:sequenceFlow id="Flow_118ehyu" sourceRef="Start" targetRef="pending_quote" />
+    <bpmn:sequenceFlow id="Flow_1u5wwff" sourceRef="pending_quote" targetRef="quoted" />
+    <bpmn:sequenceFlow id="Flow_09wyltu" sourceRef="quoted" targetRef="Gateway_1h976xq" />
+    <bpmn:sequenceFlow id="Flow_0wf3d11" name="no" sourceRef="Gateway_1h976xq" targetRef="rejected" />
+    <bpmn:sequenceFlow id="Flow_1hmy11t" sourceRef="in_transit" targetRef="collected" />
+    <bpmn:sequenceFlow id="Flow_0h0sa5i" sourceRef="collected" targetRef="Activity_16d9f4a" />
+    <bpmn:sequenceFlow id="Flow_1gvo0u9" sourceRef="Activity_16d9f4a" targetRef="feedback_received" />
+    <bpmn:sequenceFlow id="Flow_0q3awiz" sourceRef="rejected" targetRef="archived" />
+    <bpmn:sequenceFlow id="Flow_0tjn2kd" sourceRef="feedback_received" targetRef="archived" />
+    <bpmn:sequenceFlow id="Flow_0sk9d0w" sourceRef="cancelled" targetRef="archived" />
   </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_Repair">
+    <bpmndi:BPMNPlane id="Plane_Repair" bpmnElement="Collaboration_19x5bum">
+      <bpmndi:BPMNShape id="Participant_0oyf7sm_di" bpmnElement="Participant_0oyf7sm" isHorizontal="true">
+        <dc:Bounds x="160" y="55" width="1630" height="565" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1189m49_di" bpmnElement="Lane_1189m49" isHorizontal="true">
+        <dc:Bounds x="190" y="55" width="1600" height="205" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0tfzzqn_di" bpmnElement="Lane_0tfzzqn" isHorizontal="true">
+        <dc:Bounds x="190" y="260" width="1600" height="160" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1r1m4v5_di" bpmnElement="Lane_1r1m4v5" isHorizontal="true">
+        <dc:Bounds x="190" y="420" width="1600" height="200" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="confirmed_di" bpmnElement="confirmed">
+        <dc:Bounds x="280" y="445" width="100" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="scheduled_di" bpmnElement="scheduled">
+        <dc:Bounds x="420" y="445" width="100" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="diagnosing_di" bpmnElement="diagnosing">
+        <dc:Bounds x="560" y="445" width="100" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_18paal0_di" bpmnElement="Gateway_18paal0" isMarkerVisible="true">
+        <dc:Bounds x="705" y="445" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="687" y="505" width="85" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="in_progress_di" bpmnElement="in_progress">
+        <dc:Bounds x="820" y="445" width="100" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ready_for_pickup_di" bpmnElement="ready_for_pickup">
+        <dc:Bounds x="990" y="445" width="140" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gateway_pickup_ship_di" bpmnElement="gateway_pickup_ship" isMarkerVisible="true">
+        <dc:Bounds x="1190" y="450" width="40" height="40" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1189" y="490" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="awaiting_parts_di" bpmnElement="awaiting_parts">
+        <dc:Bounds x="810" y="325" width="120" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="pending_quote_di" bpmnElement="pending_quote">
+        <dc:Bounds x="280" y="95" width="100" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_di" bpmnElement="Start">
+        <dc:Bounds x="212" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="118" y="183" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="quoted_di" bpmnElement="quoted">
+        <dc:Bounds x="280" y="175" width="100" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1h976xq_di" bpmnElement="Gateway_1h976xq" isMarkerVisible="true">
+        <dc:Bounds x="445" y="175" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="394" y="163" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="in_transit_di" bpmnElement="in_transit">
+        <dc:Bounds x="1255" y="325" width="90" height="50" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="collected_di" bpmnElement="collected">
+        <dc:Bounds x="1250" y="180" width="100" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1m8u1cd" bpmnElement="Activity_16d9f4a">
+        <dc:Bounds x="1415" y="185" width="90" height="50" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="rejected_di" bpmnElement="rejected">
+        <dc:Bounds x="1410" y="95" width="100" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="feedback_received_di" bpmnElement="feedback_received">
+        <dc:Bounds x="1540" y="185" width="160" height="50" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="archived_di" bpmnElement="archived">
+        <dc:Bounds x="1602" y="552" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1589" y="603" width="42" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="cancelled_di" bpmnElement="cancelled">
+        <dc:Bounds x="560" y="545" width="100" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0aoeq7f_di" bpmnElement="Flow_0aoeq7f">
+        <di:waypoint x="470" y="225" />
+        <di:waypoint x="470" y="335" />
+        <di:waypoint x="340" y="335" />
+        <di:waypoint x="340" y="445" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="396" y="317" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1kds6gy_di" bpmnElement="Flow_1kds6gy">
+        <di:waypoint x="380" y="470" />
+        <di:waypoint x="420" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15d6rft_di" bpmnElement="Flow_15d6rft">
+        <di:waypoint x="330" y="495" />
+        <di:waypoint x="330" y="570" />
+        <di:waypoint x="560" y="570" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15znzx3_di" bpmnElement="Flow_15znzx3">
+        <di:waypoint x="520" y="470" />
+        <di:waypoint x="560" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_08j81uf_di" bpmnElement="Flow_08j81uf">
+        <di:waypoint x="470" y="495" />
+        <di:waypoint x="470" y="570" />
+        <di:waypoint x="560" y="570" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0dw55fb_di" bpmnElement="Flow_0dw55fb">
+        <di:waypoint x="660" y="470" />
+        <di:waypoint x="705" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1j8xx1t_di" bpmnElement="Flow_1j8xx1t">
+        <di:waypoint x="610" y="495" />
+        <di:waypoint x="610" y="545" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0wv6483_di" bpmnElement="Flow_0wv6483">
+        <di:waypoint x="730" y="445" />
+        <di:waypoint x="730" y="350" />
+        <di:waypoint x="810" y="350" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="736" y="395" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1cgg9jk_di" bpmnElement="Flow_1cgg9jk">
+        <di:waypoint x="755" y="470" />
+        <di:waypoint x="820" y="470" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="781" y="472" width="13" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_07jqn5m_di" bpmnElement="Flow_07jqn5m">
+        <di:waypoint x="870" y="375" />
+        <di:waypoint x="870" y="445" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0sfrmvf_di" bpmnElement="Flow_0sfrmvf">
+        <di:waypoint x="920" y="470" />
+        <di:waypoint x="990" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ok33ch_di" bpmnElement="Flow_0ok33ch">
+        <di:waypoint x="1130" y="470" />
+        <di:waypoint x="1190" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0mkgpyv_di" bpmnElement="Flow_0mkgpyv">
+        <di:waypoint x="1230" y="470" />
+        <di:waypoint x="1300" y="470" />
+        <di:waypoint x="1300" y="375" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1280" y="472" width="13" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0bwncw9_di" bpmnElement="Flow_0bwncw9">
+        <di:waypoint x="1210" y="450" />
+        <di:waypoint x="1210" y="205" />
+        <di:waypoint x="1250" y="205" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1181" y="433" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_118ehyu_di" bpmnElement="Flow_118ehyu">
+        <di:waypoint x="248" y="120" />
+        <di:waypoint x="280" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1u5wwff_di" bpmnElement="Flow_1u5wwff">
+        <di:waypoint x="330" y="145" />
+        <di:waypoint x="330" y="175" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_09wyltu_di" bpmnElement="Flow_09wyltu">
+        <di:waypoint x="380" y="200" />
+        <di:waypoint x="445" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0wf3d11_di" bpmnElement="Flow_0wf3d11">
+        <di:waypoint x="470" y="175" />
+        <di:waypoint x="470" y="120" />
+        <di:waypoint x="1410" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="479" y="148" width="13" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1hmy11t_di" bpmnElement="Flow_1hmy11t">
+        <di:waypoint x="1300" y="325" />
+        <di:waypoint x="1300" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0h0sa5i_di" bpmnElement="Flow_0h0sa5i">
+        <di:waypoint x="1350" y="205" />
+        <di:waypoint x="1415" y="205" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1gvo0u9_di" bpmnElement="Flow_1gvo0u9">
+        <di:waypoint x="1505" y="210" />
+        <di:waypoint x="1540" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0q3awiz_di" bpmnElement="Flow_0q3awiz">
+        <di:waypoint x="1510" y="120" />
+        <di:waypoint x="1730" y="120" />
+        <di:waypoint x="1730" y="570" />
+        <di:waypoint x="1638" y="570" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0tjn2kd_di" bpmnElement="Flow_0tjn2kd">
+        <di:waypoint x="1620" y="235" />
+        <di:waypoint x="1620" y="552" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0sk9d0w_di" bpmnElement="Flow_0sk9d0w">
+        <di:waypoint x="660" y="570" />
+        <di:waypoint x="1602" y="570" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
 </bpmn:definitions>
