@@ -3,6 +3,27 @@ Towards a simple but efficient workflow for mobile phone repair shops.
 
 My example why building new custom new software is nowadays probably more efficient than buying a huge software suite(s) and painfully customizing them (and their interconnections).
 
+## Possible states of a repair
+1. Intake & Quoting: Device is still with the client
+    * `pending_quote` &mdash; Initial submission, awaiting price confirmation
+    * `quoted` &mdash; Price provided to customer
+    * `confirmed` &mdash; Customer accepted quote
+2. Work Execution: Device is in the shop
+   *  `scheduled` &mdash; Work allocated to a technician/time slot. Transition into this state at the moment the device arrived in the shop.
+   * `diagnosing` &mdash; Device aDetermining fault and repair scope
+   * `awaiting_parts` &mdash; Required materials not yet available  
+   * `in_progress` &mdash; Device is currently on work bench
+   * `on_hold` &mdash; temporarily paused by customer
+   * `ready_for_pickup` &mdash; Customer can collect or ready to ship
+4. Post-work status: Device left the shop, but is not yet with the client
+   * `in_transit` &mdash; Device handed over to parcel service.
+5. Outcomes & Closure: Device is back with the client
+   * `collected` &mdash; Device was returned to customer, waiting for feedback by customer.
+   * `rejected` &mdash; Quote/repair declined by customer. Transistion to `archived` occurs automatically after 3 months.
+   * `cancelled` &mdash; Request cancelled at any stage by the repair shop. Transistion to `archived` occurs automatically after 3 months.
+   * `feedback_received` &mdash; Customer filled out the feedback form. Transistion to `archived` occurs automatically after 3 months.
+   * `archived` &mdash; Fully closed and retained for records. Final state.
+
 ## Howto
 For now, there is no MVP (=minimal viable product) yet. What's available already:
 
