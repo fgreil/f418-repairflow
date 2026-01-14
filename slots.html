@@ -405,38 +405,52 @@
             }
         }
 
-        function parseICS(icsText) {
-            const events = [];
-            const lines = icsText.split('\n');
-            let currentEvent = null;
+        function parseISODate(isoStr) {
+            return new Date(isoStr);
+        }
 
-            for (let line of lines) {
-                line = line.trim();
-                if (line === 'BEGIN:VEVENT') {
-                    currentEvent = {};
-                } else if (line === 'END:VEVENT' && currentEvent) {
-                    events.push(currentEvent);
-                    currentEvent = null;
-                } else if (currentEvent) {
-                    if (line.startsWith('SUMMARY:')) {
-                        currentEvent.summary = line.substring(8);
-                    } else if (line.startsWith('DTSTART:')) {
-                        currentEvent.start = parseICSDate(line.substring(8));
-                    } else if (line.startsWith('DTEND:')) {
-                        currentEvent.end = parseICSDate(line.substring(6));
+        function getWeekHourRange(workingHours) {
+            let minHour = 23;
+            let maxHour = 0;
+            
+            // Check working hours for each day of the week (0=Monday, 6=Sunday)
+            for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+                const dayHours = workingHours[dayOfWeek];
+                
+                if (dayHours) {
+                    const startHour = parseInt(dayHours.start.split(':')[0]);
+                    const endHour = parseInt(dayHours.end.split(':')[0]);
+                    
+                    minHour = Math.min(minHour, startHour);
+                    maxHour = Math.max(maxHour, endHour);
+                }
+            }
+            
+            // Return range, fallback if no working hours found
+            return minHour <= maxHour ? { minHour, maxHour } : { minHour: 8, maxHour: 20 };
+        }
+
+        function getSlotStatus(date, hour, busySlots) {
+            const slotStart = new Date(date);
+            slotStart.setHours(hour, 0, 0, 0);
+            const slotEnd = new Date(slotStart);
+            slotEnd.setHours(hour + 1, 0, 0, 0);
+
+            for (let slot of busySlots) {
+                const slotStartTime = parseISODate(slot.start);
+                const slotEndTime = parseISODate(slot.end);
+                
+                // Check if this hour overlaps with the busy slot
+                if (slotStartTime < slotEnd && slotEndTime > slotStart) {
+                    if (slot.type === 'booked') {
+                        return 'busy';
+                    } else if (slot.type === 'closed') {
+                        return 'unavailable';
                     }
                 }
             }
-            return events;
-        }
-
-        function parseICSDate(dateStr) {
-            const year = parseInt(dateStr.substring(0, 4));
-            const month = parseInt(dateStr.substring(4, 6)) - 1;
-            const day = parseInt(dateStr.substring(6, 8));
-            const hour = parseInt(dateStr.substring(9, 11));
-            const minute = parseInt(dateStr.substring(11, 13));
-            return new Date(year, month, day, hour, minute);
+            
+            return 'available';
         }
 
         function getMonday(date) {
@@ -499,69 +513,25 @@
             return { start, end };
         }
 
-        function getWeekHourRange(weekStart, events) {
-            let minHour = 23;
-            let maxHour = 0;
+        async function fetchWeekData(weekStart) {
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            weekEnd.setHours(23, 59, 59, 999);
             
-            // For each day in the week, find the working hours (gaps between unavailable blocks)
-            for (let i = 0; i < 7; i++) {
-                const day = new Date(weekStart);
-                day.setDate(day.getDate() + i);
-                day.setHours(0, 0, 0, 0);
-                
-                let dayStart = null;
-                let dayEnd = null;
-                
-                // Find unavailable blocks for this day
-                for (let event of events) {
-                    if (event.summary.toLowerCase() !== 'unavailable') continue;
-                    
-                    const eventDate = new Date(event.start);
-                    eventDate.setHours(0, 0, 0, 0);
-                    
-                    if (eventDate.getTime() === day.getTime()) {
-                        const startHour = event.start.getHours();
-                        const endHour = event.end.getHours();
-                        
-                        // If unavailable block ends in morning, that's when work starts
-                        if (startHour === 0 && endHour > 0 && endHour < 12) {
-                            dayStart = endHour;
-                        }
-                        // If unavailable block starts in afternoon/evening, that's when work ends
-                        if (endHour === 23 || (endHour === 0 && event.end.getMinutes() === 0)) {
-                            dayEnd = startHour;
-                        }
-                    }
-                }
-                
-                // Update global min/max based on this day's working hours
-                if (dayStart !== null) {
-                    minHour = Math.min(minHour, dayStart);
-                }
-                if (dayEnd !== null) {
-                    maxHour = Math.max(maxHour, dayEnd);
-                }
+            const startStr = weekStart.toISOString().split('T')[0];
+            const endStr = weekEnd.toISOString().split('T')[0];
+            
+            const response = await fetch(`https://repair.f418.eu/slots?start=${startStr}&end=${endStr}`);
+            const data = await response.json();
+            
+            if (!data.success) {
+                throw new Error('Failed to fetch calendar data');
             }
             
-            // Fallback if no working hours detected
-            return minHour <= maxHour ? { minHour, maxHour } : { minHour: 8, maxHour: 20 };
+            return data;
         }
 
-        function getSlotStatus(date, hour, events) {
-            const slotStart = new Date(date);
-            slotStart.setHours(hour, 0, 0, 0);
-            const slotEnd = new Date(slotStart);
-            slotEnd.setHours(hour + 1, 0, 0, 0);
-
-            for (let event of events) {
-                if (event.start <= slotStart && event.end > slotStart) {
-                    return event.summary.toLowerCase();
-                }
-            }
-            return 'available';
-        }
-
-        function renderCalendar(events) {
+        async function renderCalendar(data) {
             const calendarDiv = document.getElementById('calendar');
             const t = translations[currentLang];
             const today = new Date();
@@ -573,7 +543,7 @@
             
             const weekNumber = getWeekNumber(currentWeekStart);
             const year = currentWeekStart.getFullYear();
-            const { minHour, maxHour } = getWeekHourRange(currentWeekStart, events);
+            const { minHour, maxHour } = getWeekHourRange(data.working_hours);
             
             let html = '<div class="week-container">';
             html += `<div class="week-header">${t.weekOf} ${formatDate(currentWeekStart)}</div>`;
@@ -596,7 +566,7 @@
                 for (let i = 0; i < 7; i++) {
                     const day = new Date(currentWeekStart);
                     day.setDate(day.getDate() + i);
-                    const status = getSlotStatus(day, hour, events);
+                    const status = getSlotStatus(day, hour, data.busy_slots);
                     html += `<div class="slot-cell ${status}"></div>`;
                 }
             }
@@ -632,32 +602,40 @@
             todayBtn.disabled = currentWeekStart.getTime() === todayMonday.getTime();
         }
 
-        function goToToday() {
+        async function goToToday() {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             currentWeekStart = getMonday(today);
-            renderCalendar(calendarData);
+            const data = await fetchWeekData(currentWeekStart);
+            calendarData = data;
+            await renderCalendar(data);
         }
 
-        function previousWeek() {
+        async function previousWeek() {
             const prevWeek = new Date(currentWeekStart);
             prevWeek.setDate(prevWeek.getDate() - 7);
+            
             if (prevWeek >= minDate) {
                 currentWeekStart = prevWeek;
-                renderCalendar(calendarData);
+                const data = await fetchWeekData(currentWeekStart);
+                calendarData = data;
+                await renderCalendar(data);
             }
         }
 
-        function nextWeek() {
+        async function nextWeek() {
             const nextWeek = new Date(currentWeekStart);
             nextWeek.setDate(nextWeek.getDate() + 7);
+            
             if (nextWeek <= maxDate) {
                 currentWeekStart = nextWeek;
-                renderCalendar(calendarData);
+                const data = await fetchWeekData(currentWeekStart);
+                calendarData = data;
+                await renderCalendar(data);
             }
         }
 
-        function changeRange() {
+        async function changeRange() {
             currentRange = document.getElementById('rangeSelector').value;
             const dateRange = calculateDateRange(currentRange);
             minDate = dateRange.start;
@@ -670,15 +648,14 @@
             if (currentWeekStart < minDate) {
                 currentWeekStart = new Date(minDate);
             }
-            renderCalendar(calendarData);
+            
+            const data = await fetchWeekData(currentWeekStart);
+            calendarData = data;
+            await renderCalendar(data);
         }
 
         async function loadCalendar() {
             try {
-                const response = await fetch('https://repair.f418.eu/slots.ics');
-                const icsText = await response.text();
-                calendarData = parseICS(icsText);
-                
                 const dateRange = calculateDateRange(currentRange);
                 minDate = dateRange.start;
                 maxDate = dateRange.end;
@@ -687,9 +664,12 @@
                 today.setHours(0, 0, 0, 0);
                 currentWeekStart = getMonday(today);
                 
+                const data = await fetchWeekData(currentWeekStart);
+                calendarData = data;
+                
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('controls').style.display = 'flex';
-                renderCalendar(calendarData);
+                await renderCalendar(data);
             } catch (error) {
                 document.getElementById('loading').style.display = 'none';
                 const errorDiv = document.getElementById('error');
