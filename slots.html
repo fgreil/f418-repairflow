@@ -430,26 +430,44 @@
             return minHour <= maxHour ? { minHour, maxHour } : { minHour: 8, maxHour: 20 };
         }
 
-        function getSlotStatus(date, hour, busySlots) {
+        function getSlotStatus(date, hour, busySlots, workingHours) {
             const slotStart = new Date(date);
             slotStart.setHours(hour, 0, 0, 0);
             const slotEnd = new Date(slotStart);
             slotEnd.setHours(hour + 1, 0, 0, 0);
 
+            // Get day of week (0 = Monday, 6 = Sunday)
+            const dayOfWeek = (date.getDay() + 6) % 7;
+            const dayHours = workingHours[dayOfWeek];
+            
+            // If no working hours for this day, it's unavailable
+            if (!dayHours) {
+                return 'unavailable';
+            }
+            
+            // Parse working hours for this day
+            const workStart = parseInt(dayHours.start.split(':')[0]);
+            const workEnd = parseInt(dayHours.end.split(':')[0]);
+            
+            // Check if hour is outside working hours
+            if (hour < workStart || hour >= workEnd) {
+                return 'unavailable';
+            }
+            
+            // Check if there's a booked appointment in this slot
             for (let slot of busySlots) {
+                if (slot.type !== 'booked') continue;
+                
                 const slotStartTime = parseISODate(slot.start);
                 const slotEndTime = parseISODate(slot.end);
                 
-                // Check if this hour overlaps with the busy slot
+                // Check if this hour overlaps with the booked appointment
                 if (slotStartTime < slotEnd && slotEndTime > slotStart) {
-                    if (slot.type === 'booked') {
-                        return 'busy';
-                    } else if (slot.type === 'closed') {
-                        return 'unavailable';
-                    }
+                    return 'busy';
                 }
             }
             
+            // During working hours with no appointment = available
             return 'available';
         }
 
@@ -566,7 +584,7 @@
                 for (let i = 0; i < 7; i++) {
                     const day = new Date(currentWeekStart);
                     day.setDate(day.getDate() + i);
-                    const status = getSlotStatus(day, hour, data.busy_slots);
+                    const status = getSlotStatus(day, hour, data.busy_slots, data.working_hours);
                     html += `<div class="slot-cell ${status}"></div>`;
                 }
             }
