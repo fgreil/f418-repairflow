@@ -300,6 +300,24 @@
         .form-group {
             margin-bottom: 24px;
         }
+        
+        .form-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+        
+        .form-row .form-group.short {
+            flex: 0 0 25%;
+        }
+        
+        .form-row .form-group.long {
+            flex: 1;
+        }
 
         label {
             display: block;
@@ -803,6 +821,15 @@
             .summary-card {
                 padding: 24px;
             }
+
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .form-row .form-group.short,
+            .form-row .form-group.long {
+                flex: 1;
+            }
         }
     </style>
 </head>
@@ -845,23 +872,7 @@
             
             <div class="grid" id="deviceGrid"></div>
             
-            <!-- For Smartphones: Model Dropdown (appears after brand selection) -->
-            <div id="modelDropdown" style="display: none; margin: 30px 0;">
-                <div class="form-group">
-                    <label for="modelSelect">Select Model</label>
-                    <select id="modelSelect">
-                        <option value="">Choose a model...</option>
-                    </select>
-                </div>
-            </div>
 
-            <!-- Custom Model Text Input -->
-            <div id="customModelInput" style="display: none; margin-bottom: 40px;">
-                <div class="form-group">
-                    <label for="customModelText">Enter model name</label>
-                    <input type="text" id="customModelText" placeholder="e.g., Pro Max, Note 10, etc.">
-                </div>
-            </div>
             
             <!-- For Smartphones: Brand Selection -->
             <div id="brandGrid" class="grid" style="display: none;"></div>
@@ -881,6 +892,24 @@
                 <div class="form-group">
                     <label for="customBrandText">Enter brand name</label>
                     <input type="text" id="customBrandText" placeholder="e.g., OnePlus, Xiaomi, etc.">
+                </div>
+            </div>
+
+            <!-- For Smartphones: Model Dropdown (appears after brand selection) -->
+            <div id="modelDropdown" style="display: none; margin: 30px 0;">
+                <div class="form-group">
+                    <label for="modelSelect">Select Model</label>
+                    <select id="modelSelect">
+                        <option value="">Choose a model...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Custom Model Text Input -->
+            <div id="customModelInput" style="display: none; margin-bottom: 40px;">
+                <div class="form-group">
+                    <label for="customModelText">Enter model name</label>
+                    <input type="text" id="customModelText" placeholder="e.g., Pro Max, Note 10, etc.">
                 </div>
             </div>
 
@@ -1137,14 +1166,14 @@
                 labelNotes: 'Additional Notes (Optional)',
                 
                 // Placeholders
-                placeholderFirstName: 'John',
-                placeholderLastName: 'Doe',
-                placeholderEmail: 'john@example.com',
-                placeholderPhone: '+49 123 4567890',
-                placeholderStreet: 'Hauptstraße',
-                placeholderHouseNumber: '123',
-                placeholderPostalCode: '12345',
-                placeholderCity: 'Berlin',
+                placeholderFirstName: 'Erika',
+                placeholderLastName: 'Mustermann',
+                placeholderEmail: 'erika.mustermann@example.com',
+                placeholderPhone: '+49 69 8062 6190',
+                placeholderStreet: 'Bernhard-Nocht-Str.',
+                placeholderHouseNumber: '76',
+                placeholderPostalCode: '20359',
+                placeholderCity: 'Hamburg',
                 placeholderImei: '123456789012345',
                 placeholderNotes: 'Tell us more about the issue...',
                 
@@ -1287,10 +1316,10 @@
                 placeholderLastName: 'Mustermann',
                 placeholderEmail: 'max@beispiel.de',
                 placeholderPhone: '+49 123 4567890',
-                placeholderStreet: 'Hauptstraße',
-                placeholderHouseNumber: '123',
-                placeholderPostalCode: '12345',
-                placeholderCity: 'Berlin',
+                placeholderStreet: 'Bernhard-Nocht-Str.',
+                placeholderHouseNumber: '76',
+                placeholderPostalCode: '20359',
+                placeholderCity: 'Hamburg',
                 placeholderImei: '123456789012345',
                 placeholderNotes: 'Erzählen Sie uns mehr über das Problem...',
                 
@@ -2262,6 +2291,17 @@
             document.getElementById('summaryRepair').textContent = repairList;
         }
 
+        function updateContinueButton() {
+            const btn = document.getElementById('continueFromQuote');
+            if (serviceType === 'post') {
+                btn.textContent = t('btnSubmit');
+            } else {
+                btn.textContent = t('btnContinue');
+            }
+        }
+       
+        
+        
         function setupEventListeners() {
             // Language switcher
             document.querySelectorAll('.lang-btn').forEach(btn => {
