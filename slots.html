@@ -401,7 +401,7 @@
             
             const errorDiv = document.getElementById('error');
             if (errorDiv.style.display !== 'none' && errorDiv.dataset.errorMsg) {
-                errorDiv.textContent = t.error + ': ' + errorDiv.dataset.errorMsg;
+                errorDiv.textContent = t.error;
             }
         }
 
@@ -503,25 +503,25 @@
             let minHour = 23;
             let maxHour = 0;
             
-            for (let i = 0; i < 7; i++) {
-                const day = new Date(weekStart);
-                day.setDate(day.getDate() + i);
+            // Parse working hours from events if available
+            for (let event of events) {
+                const eventStart = event.start.getHours();
+                const eventEnd = event.end.getHours();
                 
-                for (let event of events) {
-                    const eventDay = new Date(event.start);
-                    eventDay.setHours(0, 0, 0, 0);
-                    const checkDay = new Date(day);
-                    checkDay.setHours(0, 0, 0, 0);
-                    
-                    if (eventDay.getTime() === checkDay.getTime()) {
-                        const hour = event.start.getHours();
-                        const endHour = event.end.getHours();
-                        minHour = Math.min(minHour, hour);
-                        maxHour = Math.max(maxHour, endHour);
-                    }
+                // Check if event falls within the current week
+                const eventDate = new Date(event.start);
+                eventDate.setHours(0, 0, 0, 0);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                
+                if (eventDate >= weekStart && eventDate <= weekEnd) {
+                    minHour = Math.min(minHour, eventStart);
+                    // Add 1 to maxHour to show the full end hour slot
+                    maxHour = Math.max(maxHour, eventEnd === 0 ? 23 : eventEnd);
                 }
             }
             
+            // Fallback if no events found
             return minHour <= maxHour ? { minHour, maxHour } : { minHour: 8, maxHour: 20 };
         }
 
@@ -673,7 +673,7 @@
                 const errorDiv = document.getElementById('error');
                 errorDiv.style.display = 'block';
                 errorDiv.dataset.errorMsg = error.message;
-                errorDiv.textContent = translations[currentLang].error + ': ' + error.message;
+                errorDiv.textContent = translations[currentLang].error;
             }
         }
 
