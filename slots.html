@@ -331,7 +331,7 @@
         const translations = {
             en: {
                 title: 'Repair Calendar',
-                weekOf: 'Week of',
+                week: 'Week',
                 available: 'Available',
                 busy: 'Busy',
                 unavailable: 'Unavailable',
@@ -350,7 +350,7 @@
             },
             de: {
                 title: 'Reparatur Kalender',
-                weekOf: 'Woche vom',
+                week: 'Woche',
                 available: 'Verfügbar',
                 busy: 'Belegt',
                 unavailable: 'Nicht verfügbar',
@@ -564,11 +564,11 @@
             const { minHour, maxHour } = getWeekHourRange(data.working_hours);
             
             let html = '<div class="week-container">';
-            html += `<div class="week-header">${t.weekOf} ${formatDate(currentWeekStart)}</div>`;
+            html += `<div class="week-header">${t.week} ${weekNumber} ${year}</div>`;
             html += '<div class="calendar-grid">';
             
             // Corner cell with week number
-            html += `<div class="calendar-header corner">${t.weekPrefix} ${weekNumber}<br>${year}</div>`;
+            html += `<div class="calendar-header corner">${t.weekPrefix} ${weekNumber}</div>`;
             
             // Day headers
             for (let i = 0; i < 7; i++) {
