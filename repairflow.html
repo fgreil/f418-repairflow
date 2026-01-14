@@ -142,6 +142,19 @@
             color: white;
         }
 
+        .step.completed {
+            cursor: pointer;
+        }
+
+        .step.completed:hover .step-circle {
+            transform: scale(1.15);
+            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+        }
+
+        .step.completed:hover .step-label {
+            color: var(--accent);
+        }
+
         .step-label {
             font-size: 13px;
             color: var(--secondary);
@@ -694,7 +707,7 @@
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
+        @media (max-width: 480px) {
             h1 {
                 font-size: 32px;
             }
@@ -899,14 +912,15 @@
                     <input type="tel" id="phone" required placeholder="+49 69 8062 6190">
                 </div>
 
-                <div class="form-group">
-                    <label for="street">Street Name *</label>
-                    <input type="text" id="street" required placeholder="Bernhard-Nocht-Str.">
-                </div>
-
-                <div class="form-group">
-                    <label for="houseNumber">House Number *</label>
-                    <input type="text" id="houseNumber" required placeholder="76">
+                <div class="form-row">
+                    <div class="form-group long">
+                        <label for="street">Street Name *</label>
+                        <input type="text" id="street" required placeholder="Bernhard-Nocht-Str.">
+                    </div>
+                    <div class="form-group short">
+                        <label for="houseNumber">House Number *</label>
+                        <input type="text" id="houseNumber" required placeholder="76">
+                    </div>
                 </div>
 
                 <div class="form-row">
@@ -932,7 +946,7 @@
 
                 <div class="button-group">
                     <button type="button" class="btn-secondary" id="backToRepair">Back</button>
-                    <button type="button" class="btn-primary" id="continueFromQuote">Continue</button>
+                    <button type="button" class="btn-primary" id="continueFromQuote" disabled>Continue</button>
                 </div>
             </form>
         </div>
@@ -952,7 +966,7 @@
 
             <div class="button-group">
                 <button type="button" class="btn-secondary" id="backToQuote">Back</button>
-                <button type="button" class="btn-primary" id="submitAppointment" disabled>Confirm Appointment</button>
+                <button type="button" class="btn-primary" id="submitAppointment" disabled>Submit Request</button>
             </div>
         </div>
 
@@ -1006,7 +1020,7 @@
                 placeholderPostalCode: '20359', placeholderCity: 'Hamburg',
                 placeholderImei: '123456789012345', placeholderNotes: 'Tell us more about the issue...',
                 btnContinue: 'Continue', btnBack: 'Back', btnSubmit: 'Submit Request',
-                btnConfirmAppointment: 'Confirm Appointment', btnBackHome: 'Back to homepage',
+                btnConfirmAppointment: 'Submit Request', btnBackHome: 'Back to homepage',
                 successTitle: 'Request Submitted!', successText: "We'll contact you shortly with a detailed quote and next steps.",
                 repairScreen: 'Screen Repair', repairBattery: 'Battery Replacement', repairWater: 'Water Damage',
                 repairCamera: 'Camera Repair', repairCharging: 'Charging Port', repairSpeaker: 'Speaker Repair',
@@ -1055,7 +1069,7 @@
                 placeholderPostalCode: '20359', placeholderCity: 'Hamburg',
                 placeholderImei: '123456789012345', placeholderNotes: 'Erzählen Sie uns mehr über das Problem...',
                 btnContinue: 'Weiter', btnBack: 'Zurück', btnSubmit: 'Anfrage senden',
-                btnConfirmAppointment: 'Termin bestätigen', btnBackHome: 'Zurück zur Startseite',
+                btnConfirmAppointment: 'Anfrage senden', btnBackHome: 'Zurück zur Startseite',
                 successTitle: 'Anfrage gesendet!', successText: 'Wir kontaktieren Sie in Kürze mit einem detaillierten Angebot und den nächsten Schritten.',
                 repairScreen: 'Display-Reparatur', repairBattery: 'Akku-Austausch', repairWater: 'Wasserschaden',
                 repairCamera: 'Kamera-Reparatur', repairCharging: 'Ladebuchse', repairSpeaker: 'Lautsprecher-Reparatur',
@@ -1319,15 +1333,18 @@
             if (type === 'device') {
                 label.textContent = t('labelDeviceText');
                 textField.placeholder = t('placeholderDeviceText');
-                document.getElementById('backFromBrand').classList.add('hidden');
+                document.getElementById('backFromBrand').classList.remove('hidden');
                 document.getElementById('backFromModel').classList.add('hidden');
             } else if (type === 'brand') {
                 label.textContent = t('labelCustomBrand');
                 textField.placeholder = t('placeholderCustomBrand');
                 document.getElementById('backFromModel').classList.add('hidden');
+                document.getElementById('backFromBrand').classList.remove('hidden');
             } else if (type === 'model') {
                 label.textContent = t('labelCustomModel');
                 textField.placeholder = t('placeholderCustomModel');
+                document.getElementById('backFromBrand').classList.add('hidden');
+                document.getElementById('backFromModel').classList.remove('hidden');
             }
 
             textField.value = '';
@@ -1445,6 +1462,18 @@
                 s.classList.remove('active', 'completed');
                 if (stepNum < step) s.classList.add('completed');
                 if (stepNum === step) s.classList.add('active');
+                
+                // Remove old click listeners
+                const newStep = s.cloneNode(true);
+                s.parentNode.replaceChild(newStep, s);
+            });
+
+            // Add click listeners to completed steps
+            document.querySelectorAll('.step.completed').forEach(s => {
+                s.addEventListener('click', () => {
+                    const targetStep = parseInt(s.dataset.step);
+                    goToStep(targetStep);
+                });
             });
 
             const progress = ((step - 1) / (totalSteps - 1)) * 100;
@@ -1517,18 +1546,81 @@
             document.getElementById('submitAppointment').disabled = true;
         }
 
-        function renderTimePicker() {
-            const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+        async function renderTimePicker() {
             const grid = document.getElementById('timeGrid');
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--secondary);">Loading available time slots...</div>';
 
-            grid.innerHTML = times.map(time => {
-                const isAvailable = Math.random() > 0.3;
-                return `<div class="time-card ${!isAvailable ? 'unavailable' : ''}" data-time="${time}">${time}</div>`;
-            }).join('');
+            try {
+                // Fetch available slots from API
+                const response = await fetch('https://repair.f418.eu/slots?range=this_week');
+                const data = await response.json();
 
-            grid.querySelectorAll('.time-card:not(.unavailable)').forEach(c => {
-                c.addEventListener('click', () => selectTime(c.dataset.time));
-            });
+                if (!data.success) {
+                    throw new Error('Failed to load slots');
+                }
+
+                // Generate time slots based on slot_duration_minutes (30 min slots)
+                const selectedDateObj = new Date(state.date + 'T00:00:00');
+                const dayOfWeek = selectedDateObj.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+                // Get working hours for selected day
+                const workingHours = data.working_hours[dayOfWeek];
+                
+                if (!workingHours) {
+                    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--secondary);">No available time slots for this date (closed)</div>';
+                    return;
+                }
+
+                // Generate time slots based on working hours
+                const [startHour, startMin] = workingHours.start.split(':').map(Number);
+                const [endHour, endMin] = workingHours.end.split(':').map(Number);
+                
+                const slots = [];
+                let currentTime = new Date(selectedDateObj);
+                currentTime.setHours(startHour, startMin, 0, 0);
+                
+                const endTime = new Date(selectedDateObj);
+                endTime.setHours(endHour, endMin, 0, 0);
+
+                while (currentTime < endTime) {
+                    const timeStr = currentTime.toTimeString().slice(0, 5); // HH:MM format
+                    slots.push(timeStr);
+                    currentTime.setMinutes(currentTime.getMinutes() + data.slot_duration_minutes);
+                }
+
+                // Check which slots are busy
+                const busySlots = data.busy_slots.filter(slot => {
+                    const slotStart = new Date(slot.start);
+                    const slotEnd = new Date(slot.end);
+                    return slotStart.toDateString() === selectedDateObj.toDateString();
+                });
+
+                // Render slots
+                grid.innerHTML = slots.map(time => {
+                    const [hour, min] = time.split(':').map(Number);
+                    const slotStart = new Date(selectedDateObj);
+                    slotStart.setHours(hour, min, 0, 0);
+                    const slotEnd = new Date(slotStart);
+                    slotEnd.setMinutes(slotEnd.getMinutes() + data.slot_duration_minutes);
+
+                    // Check if this slot is busy
+                    const isBusy = busySlots.some(busy => {
+                        const busyStart = new Date(busy.start);
+                        const busyEnd = new Date(busy.end);
+                        return slotStart >= busyStart && slotStart < busyEnd;
+                    });
+
+                    return `<div class="time-card ${isBusy ? 'unavailable' : ''}" data-time="${time}">${time}</div>`;
+                }).join('');
+
+                grid.querySelectorAll('.time-card:not(.unavailable)').forEach(c => {
+                    c.addEventListener('click', () => selectTime(c.dataset.time));
+                });
+
+            } catch (error) {
+                console.error('Error loading time slots:', error);
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #ff3b30;">Failed to load time slots. Please try again.</div>';
+            }
         }
 
         function selectTime(time) {
@@ -1581,11 +1673,24 @@
                     const step4 = document.getElementById('step4indicator');
                     step4.classList.toggle('hidden', state.serviceType !== 'shop');
                     
-                    const btn = document.getElementById('continueFromQuote');
-                    btn.textContent = state.serviceType === 'post' ? t('btnSubmit') : t('btnContinue');
-                    btn.disabled = false;
+                    updateQuoteButton();
                 });
             });
+
+            // Form field validation
+            const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'street', 'houseNumber', 'postalCode', 'city'];
+            requiredFields.forEach(fieldId => {
+                document.getElementById(fieldId).addEventListener('input', updateQuoteButton);
+            });
+
+            function updateQuoteButton() {
+                const btn = document.getElementById('continueFromQuote');
+                const allFilled = requiredFields.every(id => document.getElementById(id).value.trim() !== '');
+                const serviceSelected = state.serviceType !== null;
+                
+                btn.disabled = !(allFilled && serviceSelected);
+                btn.textContent = state.serviceType === 'post' ? t('btnSubmit') : t('btnContinue');
+            }
 
             // Navigation buttons
             document.getElementById('nextToRepair').addEventListener('click', () => goToStep(2));
@@ -1793,7 +1898,7 @@
             document.getElementById('backToRepair').textContent = t('btnBack');
             document.getElementById('continueFromQuote').textContent = state.serviceType === 'post' ? t('btnSubmit') : t('btnContinue');
             document.getElementById('backToQuote').textContent = t('btnBack');
-            document.getElementById('submitAppointment').textContent = t('btnConfirmAppointment');
+            document.getElementById('submitAppointment').textContent = t('btnSubmit');
 
             // Success
             document.querySelector('.success-title').textContent = t('successTitle');
