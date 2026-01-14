@@ -89,64 +89,6 @@
             color: #333;
         }
 
-        .calendar-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        .calendar-table th {
-            background: #f8f9fa;
-            padding: 12px 8px;
-            text-align: center;
-            font-weight: 600;
-            border: 1px solid #dee2e6;
-            color: #495057;
-        }
-
-        .calendar-table td {
-            border: 1px solid #dee2e6;
-            padding: 4px;
-            text-align: center;
-            min-width: 60px;
-            height: 28px;
-        }
-
-        .calendar-table td.time-label {
-            background: #f8f9fa;
-            font-weight: 500;
-            text-align: right;
-            padding-right: 10px;
-            color: #495057;
-        }
-
-        /* Colorblind-friendly colors with patterns */
-        .calendar-table td.available {
-            background: #0d6efd;
-            background-image: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 2px,
-                rgba(255,255,255,0.3) 2px,
-                rgba(255,255,255,0.3) 4px
-            );
-        }
-
-        .calendar-table td.unavailable {
-            background: #6c757d;
-        }
-
-        .calendar-table td.busy {
-            background: #ffc107;
-            background-image: repeating-linear-gradient(
-                -45deg,
-                transparent,
-                transparent 2px,
-                rgba(0,0,0,0.1) 2px,
-                rgba(0,0,0,0.1) 4px
-            );
-        }
-
         .legend {
             display: flex;
             gap: 30px;
@@ -203,6 +145,148 @@
             border-left: 4px solid #dc3545;
             font-size: 1rem;
         }
+
+        /* Navigation controls */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            padding: 8px 16px;
+            border: 1px solid #dee2e6;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            color: #212529;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: #e7f1ff;
+            border-color: #0d6efd;
+        }
+
+        .nav-btn:disabled {
+            background: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .range-selector {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            color: #212529;
+        }
+
+        /* Current day highlight */
+        .calendar-table th.current-day {
+            background: #cfe2ff;
+            color: #084298;
+            font-weight: 700;
+        }
+
+        .week-info {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        /* Grid-based calendar layout */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: 50px repeat(7, 1fr);
+            gap: 2px;
+            background: #dee2e6;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .calendar-header {
+            background: #f8f9fa;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            color: #495057;
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .calendar-header.corner {
+            background: #f8f9fa;
+        }
+
+        .calendar-header.current-day {
+            background: #cfe2ff;
+            color: #084298;
+            font-weight: 700;
+        }
+
+        .time-cell {
+            background: #f8f9fa;
+            padding: 4px 10px 4px 4px;
+            text-align: right;
+            font-weight: 500;
+            color: #495057;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .slot-cell {
+            background: white;
+            min-height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Colorblind-friendly colors with patterns */
+        .slot-cell.available {
+            background: #0d6efd;
+            background-image: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 2px,
+                rgba(255,255,255,0.3) 2px,
+                rgba(255,255,255,0.3) 4px
+            );
+        }
+
+        .slot-cell.unavailable {
+            background: #6c757d;
+        }
+
+        .slot-cell.busy {
+            background: #ffc107;
+            background-image: repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,0.1) 2px,
+                rgba(0,0,0,0.1) 4px
+            );
+        }
     </style>
 </head>
 <body>
@@ -217,6 +301,28 @@
         
         <div id="error" class="error" style="display: none;"></div>
         <div id="loading" class="loading">Loading calendar...</div>
+        
+        <div id="controls" class="controls" style="display: none;">
+            <div class="nav-buttons">
+                <button class="nav-btn" id="todayBtn" onclick="goToToday()">
+                    <span id="btn-today">Today</span>
+                </button>
+                <button class="nav-btn" id="prevBtn" onclick="previousWeek()">
+                    <span id="btn-prev">← Previous Week</span>
+                </button>
+                <button class="nav-btn" id="nextBtn" onclick="nextWeek()">
+                    <span id="btn-next">Next Week →</span>
+                </button>
+            </div>
+            <select class="range-selector" id="rangeSelector" onchange="changeRange()">
+                <option value="this_week">This Week</option>
+                <option value="next_week">Next Week</option>
+                <option value="this_month">This Month</option>
+                <option value="next_month">Next Month</option>
+                <option value="this_year">This Year</option>
+            </select>
+        </div>
+        
         <div id="calendar"></div>
         
         <div class="legend">
@@ -245,7 +351,16 @@
                 unavailable: 'Unavailable',
                 loading: 'Loading calendar...',
                 error: 'Error loading calendar',
-                days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                btnToday: 'Today',
+                btnPrev: '← Previous Week',
+                btnNext: 'Next Week →',
+                weekNumber: 'Week',
+                rangeThisWeek: 'This Week',
+                rangeNextWeek: 'Next Week',
+                rangeThisMonth: 'This Month',
+                rangeNextMonth: 'Next Month',
+                rangeThisYear: 'This Year'
             },
             de: {
                 title: 'Reparatur Kalender',
@@ -255,12 +370,25 @@
                 unavailable: 'Nicht verfügbar',
                 loading: 'Kalender wird geladen...',
                 error: 'Fehler beim Laden des Kalenders',
-                days: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
+                days: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
+                btnToday: 'Heute',
+                btnPrev: '← Vorherige Woche',
+                btnNext: 'Nächste Woche →',
+                weekNumber: 'KW',
+                rangeThisWeek: 'Diese Woche',
+                rangeNextWeek: 'Nächste Woche',
+                rangeThisMonth: 'Dieser Monat',
+                rangeNextMonth: 'Nächster Monat',
+                rangeThisYear: 'Dieses Jahr'
             }
         };
 
         let currentLang = 'en';
         let calendarData = null;
+        let currentWeekStart = null;
+        let minDate = null;
+        let maxDate = null;
+        let currentRange = 'this_week';
 
         function setLanguage(lang) {
             currentLang = lang;
@@ -282,6 +410,17 @@
             document.getElementById('legend-busy').textContent = t.busy;
             document.getElementById('legend-unavailable').textContent = t.unavailable;
             document.getElementById('loading').textContent = t.loading;
+            document.getElementById('btn-today').textContent = t.btnToday;
+            document.getElementById('btn-prev').textContent = t.btnPrev;
+            document.getElementById('btn-next').textContent = t.btnNext;
+            
+            // Update range selector options
+            const rangeSelector = document.getElementById('rangeSelector');
+            rangeSelector.options[0].text = t.rangeThisWeek;
+            rangeSelector.options[1].text = t.rangeNextWeek;
+            rangeSelector.options[2].text = t.rangeThisMonth;
+            rangeSelector.options[3].text = t.rangeNextMonth;
+            rangeSelector.options[4].text = t.rangeThisYear;
             
             // Update error message if visible
             const errorDiv = document.getElementById('error');
@@ -335,28 +474,59 @@
             return new Date(d.setDate(diff));
         }
 
+        function getWeekNumber(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
+        function isSameDay(date1, date2) {
+            return date1.getFullYear() === date2.getFullYear() &&
+                   date1.getMonth() === date2.getMonth() &&
+                   date1.getDate() === date2.getDate();
+        }
+
         function formatDate(date) {
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
             return date.toLocaleDateString(currentLang === 'de' ? 'de-DE' : 'en-US', options);
         }
 
-        function getWeeks(events) {
-            const weeks = new Map();
+        function calculateDateRange(range) {
             const today = new Date();
-            const endDate = new Date(today);
-            endDate.setMonth(endDate.getMonth() + 3); // Show 3 months ahead
-
-            let currentDate = getMonday(today);
+            today.setHours(0, 0, 0, 0);
+            const monday = getMonday(today);
             
-            while (currentDate <= endDate) {
-                const weekKey = currentDate.toISOString().split('T')[0];
-                if (!weeks.has(weekKey)) {
-                    weeks.set(weekKey, new Date(currentDate));
-                }
-                currentDate.setDate(currentDate.getDate() + 7);
+            let start = new Date(monday);
+            let end = new Date(monday);
+            
+            switch(range) {
+                case 'this_week':
+                    end.setDate(end.getDate() + 6);
+                    break;
+                case 'next_week':
+                    start.setDate(start.getDate() + 7);
+                    end.setDate(end.getDate() + 13);
+                    break;
+                case 'this_month':
+                    start = new Date(today.getFullYear(), today.getMonth(), 1);
+                    start = getMonday(start);
+                    end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    break;
+                case 'next_month':
+                    start = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+                    start = getMonday(start);
+                    end = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+                    break;
+                case 'this_year':
+                    start = new Date(today.getFullYear(), 0, 1);
+                    start = getMonday(start);
+                    end = new Date(today.getFullYear(), 11, 31);
+                    break;
             }
-
-            return Array.from(weeks.values());
+            
+            return { start, end };
         }
 
         function getSlotStatus(date, hour, events) {
@@ -376,43 +546,119 @@
 
         function renderCalendar(events) {
             const calendarDiv = document.getElementById('calendar');
-            const weeks = getWeeks(events);
             const t = translations[currentLang];
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (!currentWeekStart) {
+                currentWeekStart = getMonday(today);
+            }
+            
+            const weekNumber = getWeekNumber(currentWeekStart);
+            const year = currentWeekStart.getFullYear();
             
             let html = '';
-
-            for (let weekStart of weeks) {
-                html += `<div class="week-container">`;
-                html += `<div class="week-header">${t.weekOf} ${formatDate(weekStart)}</div>`;
-                html += `<table class="calendar-table">`;
-                html += `<thead><tr><th></th>`;
-                
-                // Day headers
-                for (let i = 0; i < 7; i++) {
-                    const day = new Date(weekStart);
-                    day.setDate(day.getDate() + i);
-                    html += `<th>${t.days[i]}<br>${day.getDate()}</th>`;
-                }
-                html += `</tr></thead><tbody>`;
-
-                // Time slots from 8:00 to 20:00
-                for (let hour = 8; hour <= 20; hour++) {
-                    html += `<tr>`;
-                    html += `<td class="time-label">${hour}:00</td>`;
-                    
-                    for (let i = 0; i < 7; i++) {
-                        const day = new Date(weekStart);
-                        day.setDate(day.getDate() + i);
-                        const status = getSlotStatus(day, hour, events);
-                        html += `<td class="${status}"></td>`;
-                    }
-                    html += `</tr>`;
-                }
-
-                html += `</tbody></table></div>`;
+            html += `<div class="week-container">`;
+            html += `<div class="week-info">${t.weekNumber} ${weekNumber} • ${year}</div>`;
+            html += `<div class="week-header">${t.weekOf} ${formatDate(currentWeekStart)}</div>`;
+            html += `<div class="calendar-grid">`;
+            
+            // Corner cell (top-left)
+            html += `<div class="calendar-header corner"></div>`;
+            
+            // Day headers
+            for (let i = 0; i < 7; i++) {
+                const day = new Date(currentWeekStart);
+                day.setDate(day.getDate() + i);
+                const isToday = isSameDay(day, today);
+                const currentClass = isToday ? ' current-day' : '';
+                html += `<div class="calendar-header${currentClass}">${t.days[i]}<br>${day.getDate()}</div>`;
             }
 
+            // Time slots from 8:00 to 20:00
+            for (let hour = 8; hour <= 20; hour++) {
+                html += `<div class="time-cell">${hour}:00</div>`;
+                
+                for (let i = 0; i < 7; i++) {
+                    const day = new Date(currentWeekStart);
+                    day.setDate(day.getDate() + i);
+                    const status = getSlotStatus(day, hour, events);
+                    html += `<div class="slot-cell ${status}"></div>`;
+                }
+            }
+
+            html += `</div></div>`;
             calendarDiv.innerHTML = html;
+            
+            updateNavigationButtons();
+        }
+
+        function updateNavigationButtons() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayMonday = getMonday(today);
+            
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const todayBtn = document.getElementById('todayBtn');
+            
+            // Disable previous if we're at or before today's week
+            prevBtn.disabled = currentWeekStart <= todayMonday;
+            
+            // Disable next if we're at or beyond the max date
+            const nextWeek = new Date(currentWeekStart);
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            nextBtn.disabled = nextWeek > maxDate;
+            
+            // Disable today if we're already on current week
+            todayBtn.disabled = currentWeekStart.getTime() === todayMonday.getTime();
+        }
+
+        function goToToday() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            currentWeekStart = getMonday(today);
+            renderCalendar(calendarData);
+        }
+
+        function previousWeek() {
+            const prevWeek = new Date(currentWeekStart);
+            prevWeek.setDate(prevWeek.getDate() - 7);
+            
+            if (prevWeek >= minDate) {
+                currentWeekStart = prevWeek;
+                renderCalendar(calendarData);
+            }
+        }
+
+        function nextWeek() {
+            const nextWeek = new Date(currentWeekStart);
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            
+            if (nextWeek <= maxDate) {
+                currentWeekStart = nextWeek;
+                renderCalendar(calendarData);
+            }
+        }
+
+        function changeRange() {
+            const range = document.getElementById('rangeSelector').value;
+            currentRange = range;
+            const dateRange = calculateDateRange(range);
+            minDate = dateRange.start;
+            maxDate = dateRange.end;
+            
+            // Reset to the first valid week
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            currentWeekStart = getMonday(today);
+            
+            // If current week is before min date, start at min date
+            if (currentWeekStart < minDate) {
+                currentWeekStart = new Date(minDate);
+            }
+            
+            renderCalendar(calendarData);
         }
 
         async function loadCalendar() {
@@ -421,7 +667,18 @@
                 const icsText = await response.text();
                 calendarData = parseICS(icsText);
                 
+                // Initialize date range
+                const dateRange = calculateDateRange(currentRange);
+                minDate = dateRange.start;
+                maxDate = dateRange.end;
+                
+                // Set initial week to current week
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                currentWeekStart = getMonday(today);
+                
                 document.getElementById('loading').style.display = 'none';
+                document.getElementById('controls').style.display = 'flex';
                 renderCalendar(calendarData);
             } catch (error) {
                 document.getElementById('loading').style.display = 'none';
