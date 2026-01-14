@@ -503,25 +503,47 @@
             let minHour = 23;
             let maxHour = 0;
             
-            // Parse working hours from events if available
-            for (let event of events) {
-                const eventStart = event.start.getHours();
-                const eventEnd = event.end.getHours();
+            // For each day in the week, find the working hours (gaps between unavailable blocks)
+            for (let i = 0; i < 7; i++) {
+                const day = new Date(weekStart);
+                day.setDate(day.getDate() + i);
+                day.setHours(0, 0, 0, 0);
                 
-                // Check if event falls within the current week
-                const eventDate = new Date(event.start);
-                eventDate.setHours(0, 0, 0, 0);
-                const weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekEnd.getDate() + 6);
+                let dayStart = null;
+                let dayEnd = null;
                 
-                if (eventDate >= weekStart && eventDate <= weekEnd) {
-                    minHour = Math.min(minHour, eventStart);
-                    // Add 1 to maxHour to show the full end hour slot
-                    maxHour = Math.max(maxHour, eventEnd === 0 ? 23 : eventEnd);
+                // Find unavailable blocks for this day
+                for (let event of events) {
+                    if (event.summary.toLowerCase() !== 'unavailable') continue;
+                    
+                    const eventDate = new Date(event.start);
+                    eventDate.setHours(0, 0, 0, 0);
+                    
+                    if (eventDate.getTime() === day.getTime()) {
+                        const startHour = event.start.getHours();
+                        const endHour = event.end.getHours();
+                        
+                        // If unavailable block ends in morning, that's when work starts
+                        if (startHour === 0 && endHour > 0 && endHour < 12) {
+                            dayStart = endHour;
+                        }
+                        // If unavailable block starts in afternoon/evening, that's when work ends
+                        if (endHour === 23 || (endHour === 0 && event.end.getMinutes() === 0)) {
+                            dayEnd = startHour;
+                        }
+                    }
+                }
+                
+                // Update global min/max based on this day's working hours
+                if (dayStart !== null) {
+                    minHour = Math.min(minHour, dayStart);
+                }
+                if (dayEnd !== null) {
+                    maxHour = Math.max(maxHour, dayEnd);
                 }
             }
             
-            // Fallback if no events found
+            // Fallback if no working hours detected
             return minHour <= maxHour ? { minHour, maxHour } : { minHour: 8, maxHour: 20 };
         }
 
