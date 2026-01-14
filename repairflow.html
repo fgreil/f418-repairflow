@@ -983,12 +983,12 @@
             <form id="quoteForm">
                 <div class="form-group">
                     <label for="firstName">First Name *</label>
-                    <input type="text" id="firstName" required placeholder="John">
+                    <input type="text" id="firstName" required placeholder="Mustermann">
                 </div>
 
                 <div class="form-group">
                     <label for="lastName">Last Name *</label>
-                    <input type="text" id="lastName" required placeholder="Doe">
+                    <input type="text" id="lastName" required placeholder="Erika">
                 </div>
 
                 <div class="form-group">
@@ -998,7 +998,7 @@
 
                 <div class="form-group">
                     <label for="phone">Phone Number *</label>
-                    <input type="tel" id="phone" required placeholder="+1 (555) 123-4567">
+                    <input type="tel" id="phone" required placeholder="+49 (0)69 8062 6190">
                 </div>
 
                 <div class="form-group">
@@ -1011,14 +1011,15 @@
                     <input type="text" id="houseNumber" required placeholder="123">
                 </div>
 
-                <div class="form-group">
-                    <label for="postalCode">Postal Code *</label>
-                    <input type="text" id="postalCode" required placeholder="12345" pattern="[0-9]{5}" maxlength="5">
-                </div>
-
-                <div class="form-group">
-                    <label for="city">City *</label>
-                    <input type="text" id="city" required placeholder="New York">
+                <div class="form-row">
+                    <div class="form-group short">
+                        <label for="postalCode">Postal Code *</label>
+                        <input type="text" id="postalCode" required placeholder="20359" pattern="[0-9]{5}" maxlength="5">
+                    </div>
+                    <div class="form-group long">
+                        <label for="city">City *</label>
+                        <input type="text" id="city" required placeholder="Hamburg">
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -2324,7 +2325,8 @@
                     } else {
                         step4indicator.style.display = 'none';
                     }
-                    
+                    // Update button text based on service type
+                    updateContinueButton();                  
                     // Enable continue button
                     document.getElementById('continueFromQuote').disabled = false;
                 });
