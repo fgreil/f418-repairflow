@@ -1,3 +1,7 @@
+# ============================================================================
+# IMPORTS
+# ============================================================================
+
 from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
 from pymongo import MongoClient
@@ -8,12 +12,23 @@ import logging
 from icalendar import Calendar, Event
 from functools import wraps
 
+# ============================================================================
+# LOGGING CONFIGURATION
+# ============================================================================
+
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+# ============================================================================
 # FLASK APP INITIALIZATION
+# ============================================================================
+
 app = Flask(__name__)
+
+# ============================================================================
+# CORS CONFIGURATION
+# ============================================================================
 
 # Enable CORS with explicit configuration
 CORS(app, resources={
@@ -23,6 +38,10 @@ CORS(app, resources={
         "allow_headers": ["Content-Type", "Authorization"]
     }
 })
+
+# ============================================================================
+# APPOINTMENT BOOKING CONFIGURATION
+# ============================================================================
 
 # Appointment booking configuration
 SLOT_DURATION_MINUTES = 30  # to be used later for the endpoint /slot with method POST
@@ -46,6 +65,10 @@ FIXED_HOLIDAYS = [
 CALENDAR_USERNAME = "admin"
 CALENDAR_PASSWORD = "change_me_please"
 
+# ============================================================================
+# REQUEST LOGGING MIDDLEWARE
+# ============================================================================
+
 # Add request logging middleware
 @app.before_request
 def log_request():
@@ -54,9 +77,17 @@ def log_request():
     if request.method == 'POST':
         logger.info(f"Body: {request.get_data(as_text=True)}")
 
+# ============================================================================
+# DATABASE CONNECTION
+# ============================================================================
+
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
 db = client['repair_shop']  # Database name
+
+# ============================================================================
+# AUTHENTICATION
+# ============================================================================
 
 # Authentication decorator for protected calendar endpoint
 def require_calendar_auth(f):
@@ -75,6 +106,7 @@ def require_calendar_auth(f):
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
 def is_holiday(date_obj):
     """Check if a date is a configured holiday"""
     return (date_obj.month, date_obj.day) in FIXED_HOLIDAYS
@@ -197,8 +229,9 @@ def list_routes():
             'authentication': 'HTTP Basic Auth required',
             'returns': 'iCalendar file with complete appointment information'
         },
-        'GET /slots': {
+        'GET /slots?range=<range>': {
             'description': 'Available/busy slots without details (public)',
+            'parameters': 'range (optional): today (default), this_week, next_week, this_month, next_month, this_year',
             'returns': 'JSON with booked slots and non-working hours'
         },
         'GET /slots.ics': {
@@ -212,7 +245,6 @@ def list_routes():
         'version': '1.0',
         'endpoints': endpoints
     })
-
 
 # ============================================================================
 # ROUTE HANDLERS - UTILITY ENDPOINTS
@@ -240,7 +272,6 @@ def get_excuse():
        return jsonify({"excuse": "Command not found"}), 500
     except Exception as e:
        return jsonify({"excuse": "Error: {str(e)}"}), 500
-
 
 # ============================================================================
 # ROUTE HANDLERS - REPAIR REQUESTS
@@ -375,7 +406,6 @@ def handle_repair_request():
                 'error': str(e)
             }), 500
 
-
 # ============================================================================
 # ROUTE HANDLERS - CALENDAR ENDPOINTS
 # ============================================================================
@@ -481,10 +511,49 @@ def slots_json():
     Public endpoint showing busy/free slots without details - JSON format
     """
     try:
-        # Get date range (next 30 days by default)
-        days = int(request.args.get('days', 30))
-        start_date = datetime.now()
-        end_date = start_date + timedelta(days=days)
+        # Get time range parameter (default: today)
+        range_param = request.args.get('range', 'today').lower()
+        
+        start_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        # Calculate end_date based on range parameter
+        if range_param == 'today':
+            end_date = start_date.replace(hour=23, minute=59, second=59)
+        elif range_param == 'this_week':
+            # End of current week (Sunday)
+            days_until_sunday = 6 - start_date.weekday()
+            end_date = start_date + timedelta(days=days_until_sunday, hours=23, minutes=59, seconds=59)
+        elif range_param == 'next_week':
+            # Start of next week (Monday)
+            days_until_monday = 7 - start_date.weekday()
+            start_date = start_date + timedelta(days=days_until_monday)
+            # End of next week (Sunday)
+            end_date = start_date + timedelta(days=6, hours=23, minutes=59, seconds=59)
+        elif range_param == 'this_month':
+            # End of current month
+            if start_date.month == 12:
+                end_date = start_date.replace(day=31, hour=23, minute=59, second=59)
+            else:
+                next_month = start_date.replace(month=start_date.month + 1, day=1)
+                end_date = next_month - timedelta(seconds=1)
+        elif range_param == 'next_month':
+            # Start of next month
+            if start_date.month == 12:
+                start_date = start_date.replace(year=start_date.year + 1, month=1, day=1)
+            else:
+                start_date = start_date.replace(month=start_date.month + 1, day=1)
+            # End of next month
+            if start_date.month == 12:
+                end_date = start_date.replace(day=31, hour=23, minute=59, second=59)
+            else:
+                next_month = start_date.replace(month=start_date.month + 1, day=1)
+                end_date = next_month - timedelta(seconds=1)
+        elif range_param == 'this_year':
+            # End of current year
+            end_date = start_date.replace(month=12, day=31, hour=23, minute=59, second=59)
+        else:
+            # Invalid parameter, default to today
+            end_date = start_date.replace(hour=23, minute=59, second=59)
         
         # Get non-working blocks
         non_working_blocks = get_non_working_blocks(start_date, end_date)
@@ -517,6 +586,7 @@ def slots_json():
         
         return jsonify({
             'success': True,
+            'range': range_param,
             'period': {
                 'start': start_date.isoformat(),
                 'end': end_date.isoformat()
@@ -608,7 +678,6 @@ def slots_ics():
             'success': False,
             'error': str(e)
         }), 500
-
 
 # ============================================================================
 # APPLICATION ENTRY POINT
