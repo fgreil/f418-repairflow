@@ -1,16 +1,18 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
 from pymongo import MongoClient
-from datetime import datetime, timedelta, time
+from datetime import datetime, time, timedelta
 from bson.decimal128 import Decimal128
 import subprocess
 import logging
-import calendar
+from icalendar import Calendar, Event
+from functools import wraps
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+# FLASK APP INITIALIZATION
 app = Flask(__name__)
 
 # Enable CORS with explicit configuration
@@ -18,12 +20,12 @@ CORS(app, resources={
     r"/*": {
         "origins": "*",
         "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type"]
+        "allow_headers": ["Content-Type", "Authorization"]
     }
 })
 
 # Appointment booking configuration
-SLOT_DURATION_MINUTES = 30
+SLOT_DURATION_MINUTES = 30  # to be used later for the endpoint /slot with method POST
 WORKING_HOURS = {
     0: (time(9, 0), time(16, 0)),   # Monday
     1: (time(9, 0), time(16, 0)),   # Tuesday
@@ -40,6 +42,10 @@ FIXED_HOLIDAYS = [
     (12, 26)   # December 26th
 ]
 
+# Calendar credentials (you should change these!)
+CALENDAR_USERNAME = "admin"
+CALENDAR_PASSWORD = "change_me_please"
+
 # Add request logging middleware
 @app.before_request
 def log_request():
@@ -52,71 +58,113 @@ def log_request():
 client = MongoClient('mongodb://localhost:27017/')
 db = client['repair_shop']  # Database name
 
+# Authentication decorator for protected calendar endpoint
+def require_calendar_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or auth.username != CALENDAR_USERNAME or auth.password != CALENDAR_PASSWORD:
+            return Response(
+                'Authentication required for full calendar access',
+                401,
+                {'WWW-Authenticate': 'Basic realm="Calendar Access"'}
+            )
+        return f(*args, **kwargs)
+    return decorated
 
-# Helper functions for appointment booking
-def is_working_day(date):
-    """Check if a date is a working day"""
-    # Check if it's a weekday we work on
-    if date.weekday() not in WORKING_HOURS or WORKING_HOURS[date.weekday()] is None:
-        return False
-    
-    # Check if it's a holiday
-    if (date.month, date.day) in FIXED_HOLIDAYS:
-        return False
-    
-    return True
-
-
-def generate_slots_for_day(date):
-    """Generate all possible time slots for a given day"""
-    if not is_working_day(date):
-        return []
-    
-    start_time, end_time = WORKING_HOURS[date.weekday()]
-    slots = []
-    
-    current_time = datetime.combine(date, start_time)
-    end_datetime = datetime.combine(date, end_time)
-    
-    while current_time < end_datetime:
-        slots.append(current_time)
-        current_time += timedelta(minutes=SLOT_DURATION_MINUTES)
-    
-    return slots
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+def is_holiday(date_obj):
+    """Check if a date is a configured holiday"""
+    return (date_obj.month, date_obj.day) in FIXED_HOLIDAYS
 
 
-def get_date_range(period):
-    """Get start and end dates for a given period"""
-    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+def is_working_day(date_obj):
+    """Check if a date is a working day (has working hours and not a holiday)"""
+    weekday = date_obj.weekday()
+    return WORKING_HOURS.get(weekday) is not None and not is_holiday(date_obj)
+
+
+def get_non_working_blocks(start_date, end_date):
+    """
+    Generate non-working time blocks (before/after working hours, weekends, holidays)
+    Returns list of (start_datetime, end_datetime) tuples
+    """
+    blocks = []
+    current_date = start_date.date()
+    end = end_date.date()
     
-    if period == "this_week":
-        # Start from Monday of current week
-        start = today - timedelta(days=today.weekday())
-        end = start + timedelta(days=6)
-    elif period == "next_week":
-        # Start from Monday of next week
-        start = today - timedelta(days=today.weekday()) + timedelta(days=7)
-        end = start + timedelta(days=6)
-    elif period == "this_month":
-        start = today.replace(day=1)
-        last_day = calendar.monthrange(today.year, today.month)[1]
-        end = today.replace(day=last_day)
-    elif period == "next_month":
-        if today.month == 12:
-            start = datetime(today.year + 1, 1, 1)
-            last_day = calendar.monthrange(start.year, start.month)[1]
+    while current_date <= end:
+        weekday = current_date.weekday()
+        working_hours = WORKING_HOURS.get(weekday)
+        
+        if working_hours is None or is_holiday(current_date):
+            # Full day blocked (Sunday or holiday)
+            blocks.append((
+                datetime.combine(current_date, time(0, 0)),
+                datetime.combine(current_date, time(23, 59, 59))
+            ))
         else:
-            start = datetime(today.year, today.month + 1, 1)
-            last_day = calendar.monthrange(start.year, start.month)[1]
-        end = start.replace(day=last_day)
-    elif period == "this_year":
-        start = datetime(today.year, 1, 1)
-        end = datetime(today.year, 12, 31)
-    else:
-        return None, None
+            # Block time before working hours
+            work_start, work_end = working_hours
+            if work_start > time(0, 0):
+                blocks.append((
+                    datetime.combine(current_date, time(0, 0)),
+                    datetime.combine(current_date, work_start)
+                ))
+            
+            # Block time after working hours
+            if work_end < time(23, 59, 59):
+                blocks.append((
+                    datetime.combine(current_date, work_end),
+                    datetime.combine(current_date, time(23, 59, 59))
+                ))
+        
+        current_date += timedelta(days=1)
     
-    return start, end
+    return blocks
 
+
+def get_appointments(start_date=None, end_date=None):
+    """
+    Retrieve appointments from MongoDB
+    Returns list of appointment dictionaries
+    """
+    query = {}
+    
+    # Filter by date range if provided
+    if start_date or end_date:
+        date_filter = {}
+        if start_date:
+            date_filter['$gte'] = start_date
+        if end_date:
+            date_filter['$lte'] = end_date
+        query['appointment.date'] = date_filter
+    
+    # Only get repair requests that have appointments scheduled
+    query['appointment'] = {'$exists': True}
+    
+    appointments = []
+    for request_doc in db.repair_requests.find(query):
+        if 'appointment' in request_doc:
+            appt = request_doc['appointment']
+            appointments.append({
+                'id': str(request_doc['_id']),
+                'customer': request_doc.get('customer', {}),
+                'device': request_doc.get('device', {}),
+                'service_type': request_doc.get('serviceType', 'Unknown'),
+                'date': appt.get('date'),
+                'time_slot': appt.get('timeSlot', 'Not specified'),
+                'status': request_doc.get('status', 'pending'),
+                'notes': request_doc.get('additionalNotes', '')
+            })
+    
+    return appointments
+
+# ============================================================================
+# ROUTE HANDLERS - DOCUMENTATION
+# ============================================================================
 
 @app.route('/')
 def list_routes():
@@ -140,39 +188,35 @@ def list_routes():
             'optional_fields': ['repairs', 'appointment', 'status', 'totalQuotedPrice', 'totalActualPrice', 'additionalNotes'],
             'returns': 'ID of newly created repair request'
         },
-        'GET /slots?period=<period>': {
-            'description': 'Get available appointment slots',
-            'parameters': 'period: this_week, next_week, this_month, next_month, this_year',
-            'returns': 'List of available appointment slots'
-        },
-        'GET /slot?id=<id>': {
-            'description': 'Get details of a specific appointment',
-            'parameters': 'id (required): MongoDB ObjectId of the appointment',
-            'returns': 'Complete appointment document'
-        },
-        'POST /slot': {
-            'description': 'Update or cancel an appointment',
-            'required_fields': ['id'],
-            'optional_fields': ['status', 'datetime'],
-            'returns': 'Update confirmation'
-        },
-        'GET /appointments': {
-            'description': 'Get all appointments with full details (admin view)',
-            'parameters': 'status (optional), start_date (optional), end_date (optional)',
-            'returns': 'List of all appointments'
-        },
         'GET /sorry': {
             'description': 'Get a random BOFH excuse',
             'returns': 'Random excuse text'
+        },
+        'GET /calendar.ics': {
+            'description': 'Full calendar with appointment details (requires authentication)',
+            'authentication': 'HTTP Basic Auth required',
+            'returns': 'iCalendar file with complete appointment information'
+        },
+        'GET /slots': {
+            'description': 'Available/busy slots without details (public)',
+            'returns': 'JSON with booked slots and non-working hours'
+        },
+        'GET /slots.ics': {
+            'description': 'Available/busy slots as calendar (public)',
+            'returns': 'iCalendar file showing busy/free times without details'
         }
     }
     
     return jsonify({
-        'api_name': 'Repair Flow API',
+        'api_name': 'Repair Shop API',
         'version': '1.0',
         'endpoints': endpoints
     })
 
+
+# ============================================================================
+# ROUTE HANDLERS - UTILITY ENDPOINTS
+# ============================================================================
 
 @app.route("/sorry")
 def get_excuse():
@@ -197,6 +241,10 @@ def get_excuse():
     except Exception as e:
        return jsonify({"excuse": "Error: {str(e)}"}), 500
 
+
+# ============================================================================
+# ROUTE HANDLERS - REPAIR REQUESTS
+# ============================================================================
 
 @app.route("/requests", methods=['GET'])
 def list_repair_requests():
@@ -250,22 +298,6 @@ def handle_repair_request():
             if 'updatedAt' in repair_request:
                 repair_request['updatedAt'] = repair_request['updatedAt'].isoformat()
             
-            # Convert appointment history datetimes
-            if 'appointmentHistory' in repair_request:
-                for hist in repair_request['appointmentHistory']:
-                    if 'appointmentId' in hist:
-                        hist['appointmentId'] = str(hist['appointmentId'])
-                    if 'datetime' in hist:
-                        hist['datetime'] = hist['datetime'].isoformat()
-                    if 'actionAt' in hist:
-                        hist['actionAt'] = hist['actionAt'].isoformat()
-            
-            if 'currentAppointment' in repair_request and repair_request['currentAppointment']:
-                if 'appointmentId' in repair_request['currentAppointment']:
-                    repair_request['currentAppointment']['appointmentId'] = str(repair_request['currentAppointment']['appointmentId'])
-                if 'datetime' in repair_request['currentAppointment']:
-                    repair_request['currentAppointment']['datetime'] = repair_request['currentAppointment']['datetime'].isoformat()
-            
             return jsonify({
                 'success': True,
                 'data': repair_request
@@ -293,10 +325,19 @@ def handle_repair_request():
             
             # Add optional fields if provided
             if 'repairs' in data:
-                for repair in data['repairs']:
-                    if 'quotedPrice' in repair:
-                       repair['quotedPrice'] = Decimal128(str(repair['quotedPrice']))
+                if 'repairs' in data:
+                    for repair in data['repairs']:
+                        if 'quotedPrice' in repair:
+                           repair['quotedPrice'] = Decimal128(str(repair['quotedPrice']))
                 repair_request['repairs'] = data['repairs']
+            if 'appointment' in data:
+                # Convert date string to datetime object for MongoDB
+                appointment = data['appointment'].copy()
+                if 'date' in appointment and isinstance(appointment['date'], str):
+                    # Parse date string (format: YYYY-MM-DD)
+                    from datetime import datetime as dt
+                    appointment['date'] = dt.strptime(appointment['date'], '%Y-%m-%d')
+                repair_request['appointment'] = appointment
             if 'status' in data:
                 repair_request['status'] = data['status']
             if 'totalQuotedPrice' in data:
@@ -306,65 +347,10 @@ def handle_repair_request():
             if 'additionalNotes' in data:
                 repair_request['additionalNotes'] = data['additionalNotes']
             
-            # Handle appointment if provided
-            appointment_datetime = None
-            if 'appointment' in data:
-                # Convert date string to datetime object for MongoDB
-                appointment = data['appointment'].copy()
-                if 'date' in appointment and isinstance(appointment['date'], str):
-                    # Parse date string (format: YYYY-MM-DD)
-                    from datetime import datetime as dt
-                    appointment_datetime = dt.strptime(appointment['date'], '%Y-%m-%d')
-                    appointment['date'] = appointment_datetime
-                repair_request['appointment'] = appointment
-            
             logger.info(f"Inserting into MongoDB: {repair_request}")
             # Insert into MongoDB
             result = db.repair_requests.insert_one(repair_request)
             logger.info(f"Successfully inserted with ID: {result.inserted_id}")
-            
-            # Create appointment document if appointment data was provided
-            if appointment_datetime:
-                appointment_doc = {
-                    'datetime': appointment_datetime,
-                    'status': 'booked',
-                    'requestId': result.inserted_id,
-                    'customer': {
-                        'name': data['customer'].get('name', ''),
-                        'email': data['customer'].get('email', ''),
-                        'phone': data['customer'].get('phone', '')
-                    },
-                    'device': {
-                        'brand': data['device'].get('brand', ''),
-                        'model': data['device'].get('model', ''),
-                        'color': data['device'].get('color', ''),
-                        'imei': data['device'].get('imei', '')
-                    },
-                    'createdAt': datetime.utcnow(),
-                    'updatedAt': datetime.utcnow()
-                }
-                
-                appt_result = db.appointments.insert_one(appointment_doc)
-                logger.info(f"Created appointment with ID: {appt_result.inserted_id}")
-                
-                # Update repair request with appointment reference
-                db.repair_requests.update_one(
-                    {'_id': result.inserted_id},
-                    {'$set': {
-                        'currentAppointment': {
-                            'appointmentId': appt_result.inserted_id,
-                            'datetime': appointment_datetime,
-                            'status': 'booked'
-                        },
-                        'appointmentHistory': [{
-                            'appointmentId': appt_result.inserted_id,
-                            'datetime': appointment_datetime,
-                            'status': 'booked',
-                            'action': 'booked',
-                            'actionAt': datetime.utcnow()
-                        }]
-                    }}
-                )
             
             response_data = {
                 'success': True,
@@ -372,11 +358,6 @@ def handle_repair_request():
                 'message': 'Repair request created successfully',
                 'submittedAt': repair_request['submittedAt'].isoformat()
             }
-            
-            if appointment_datetime:
-                response_data['appointmentId'] = str(appt_result.inserted_id)
-                response_data['appointmentDatetime'] = appointment_datetime.isoformat()
-            
             logger.info(f"Sending response: {response_data}")
             
             return jsonify(response_data), 201
@@ -395,247 +376,243 @@ def handle_repair_request():
             }), 500
 
 
-@app.route("/slots", methods=['GET'])
-def list_available_slots():
-    """Get available appointment slots for a specified period"""
+# ============================================================================
+# ROUTE HANDLERS - CALENDAR ENDPOINTS
+# ============================================================================
+
+@app.route("/calendar.ics", methods=['GET'])
+@require_calendar_auth
+def calendar_full():
+    """
+    Full calendar with all appointment details - requires authentication
+    """
     try:
-        period = request.args.get('period', 'this_week')
+        # Create calendar
+        cal = Calendar()
+        cal.add('prodid', '-//Repair Shop Calendar//EN')
+        cal.add('version', '2.0')
+        cal.add('calscale', 'GREGORIAN')
+        cal.add('x-wr-calname', 'Repair Shop - Full Details')
+        cal.add('x-wr-timezone', 'UTC')
         
-        start_date, end_date = get_date_range(period)
-        if start_date is None:
-            return jsonify({
-                'success': False,
-                'error': 'Invalid period. Use: this_week, next_week, this_month, next_month, or this_year'
-            }), 400
+        # Get date range (next 90 days)
+        start_date = datetime.now()
+        end_date = start_date + timedelta(days=90)
         
-        # Get all booked appointments in this date range
-        booked_slots = db.appointments.find({
-            'datetime': {
-                '$gte': start_date,
-                '$lte': end_date
-            },
-            'status': {'$in': ['booked', 'confirmed']}
-        })
+        # Add non-working hour blocks
+        non_working_blocks = get_non_working_blocks(start_date, end_date)
+        for block_start, block_end in non_working_blocks:
+            event = Event()
+            event.add('summary', 'Closed')
+            event.add('dtstart', block_start)
+            event.add('dtend', block_end)
+            event.add('transp', 'OPAQUE')  # Show as busy
+            event.add('status', 'CONFIRMED')
+            
+            # Add description for closed periods
+            if is_holiday(block_start):
+                event.add('description', 'Holiday - Shop Closed')
+            elif WORKING_HOURS.get(block_start.weekday()) is None:
+                event.add('description', 'Weekend - Shop Closed')
+            else:
+                event.add('description', 'Non-working hours')
+            
+            cal.add_component(event)
         
-        booked_datetimes = {appt['datetime'] for appt in booked_slots}
+        # Add appointments with full details
+        appointments = get_appointments(start_date, end_date)
         
-        # Generate all possible slots
-        available_slots = []
-        current_date = start_date
-        
-        while current_date <= end_date:
-            day_slots = generate_slots_for_day(current_date)
-            
-            for slot_time in day_slots:
-                if slot_time >= datetime.now() and slot_time not in booked_datetimes:
-                    available_slots.append({
-                        'datetime': slot_time.isoformat(),
-                        'date': slot_time.strftime('%Y-%m-%d'),
-                        'time': slot_time.strftime('%H:%M'),
-                        'day_of_week': slot_time.strftime('%A')
-                    })
-            
-            current_date += timedelta(days=1)
-        
-        return jsonify({
-            'success': True,
-            'period': period,
-            'start_date': start_date.strftime('%Y-%m-%d'),
-            'end_date': end_date.strftime('%Y-%m-%d'),
-            'count': len(available_slots),
-            'slots': available_slots
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"Error listing slots: {str(e)}", exc_info=True)
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-
-@app.route("/slot", methods=['GET', 'POST'])
-def handle_slot():
-    """Get details or update/cancel an appointment slot"""
-    if request.method == 'GET':
-        try:
-            slot_id = request.args.get('id')
-            if not slot_id:
-                return jsonify({
-                    'success': False,
-                    'error': 'Missing id parameter'
-                }), 400
-            
-            from bson.objectid import ObjectId
-            appointment = db.appointments.find_one({'_id': ObjectId(slot_id)})
-            
-            if not appointment:
-                return jsonify({
-                    'success': False,
-                    'error': 'Appointment not found'
-                }), 404
-            
-            # Convert ObjectId and datetime for JSON
-            appointment['_id'] = str(appointment['_id'])
-            appointment['datetime'] = appointment['datetime'].isoformat()
-            if 'requestId' in appointment:
-                appointment['requestId'] = str(appointment['requestId'])
-            if 'createdAt' in appointment:
-                appointment['createdAt'] = appointment['createdAt'].isoformat()
-            if 'updatedAt' in appointment:
-                appointment['updatedAt'] = appointment['updatedAt'].isoformat()
-            
-            return jsonify({
-                'success': True,
-                'data': appointment
-            }), 200
-            
-        except Exception as e:
-            logger.error(f"Error getting slot: {str(e)}", exc_info=True)
-            return jsonify({
-                'success': False,
-                'error': str(e)
-            }), 500
-    
-    else:  # POST - update or cancel
-        try:
-            data = request.get_json()
-            slot_id = data.get('id')
-            
-            if not slot_id:
-                return jsonify({
-                    'success': False,
-                    'error': 'Missing id field'
-                }), 400
-            
-            from bson.objectid import ObjectId
-            
-            # Get current appointment
-            current_appt = db.appointments.find_one({'_id': ObjectId(slot_id)})
-            if not current_appt:
-                return jsonify({
-                    'success': False,
-                    'error': 'Appointment not found'
-                }), 404
-            
-            update_data = {'updatedAt': datetime.utcnow()}
-            action = None
-            new_datetime = None
-            
-            if 'status' in data:
-                update_data['status'] = data['status']
-                if data['status'] == 'cancelled':
-                    action = 'cancelled'
-            
-            if 'datetime' in data:
-                # Parse new datetime
-                new_datetime = datetime.fromisoformat(data['datetime'].replace('Z', '+00:00'))
-                update_data['datetime'] = new_datetime
-                action = 'rescheduled'
-            
-            result = db.appointments.update_one(
-                {'_id': ObjectId(slot_id)},
-                {'$set': update_data}
-            )
-            
-            if result.matched_count == 0:
-                return jsonify({
-                    'success': False,
-                    'error': 'Appointment not found'
-                }), 404
-            
-            # Update repair request appointment history if there's an action
-            if action and 'requestId' in current_appt:
-                history_entry = {
-                    'appointmentId': ObjectId(slot_id),
-                    'datetime': new_datetime if new_datetime else current_appt['datetime'],
-                    'status': update_data.get('status', current_appt['status']),
-                    'action': action,
-                    'actionAt': datetime.utcnow()
-                }
-                
-                update_fields = {
-                    '$push': {'appointmentHistory': history_entry}
-                }
-                
-                # Update current appointment if not cancelled
-                if action != 'cancelled':
-                    update_fields['$set'] = {
-                        'currentAppointment': {
-                            'appointmentId': ObjectId(slot_id),
-                            'datetime': new_datetime if new_datetime else current_appt['datetime'],
-                            'status': update_data.get('status', current_appt['status'])
-                        }
-                    }
-                else:
-                    update_fields['$set'] = {'currentAppointment': None}
-                
-                db.repair_requests.update_one(
-                    {'_id': current_appt['requestId']},
-                    update_fields
-                )
-            
-            return jsonify({
-                'success': True,
-                'message': 'Appointment updated successfully',
-                'modified_count': result.modified_count
-            }), 200
-            
-        except Exception as e:
-            logger.error(f"Error updating slot: {str(e)}", exc_info=True)
-            return jsonify({
-                'success': False,
-                'error': str(e)
-            }), 500
-
-
-@app.route("/appointments", methods=['GET'])
-def list_all_appointments():
-    """Get all appointments with full details (admin view)"""
-    try:
-        # Optional filters
-        status = request.args.get('status')
-        start_date = request.args.get('start_date')
-        end_date = request.args.get('end_date')
-        
-        query = {}
-        
-        if status:
-            query['status'] = status
-        
-        if start_date or end_date:
-            query['datetime'] = {}
-            if start_date:
-                query['datetime']['$gte'] = datetime.fromisoformat(start_date)
-            if end_date:
-                query['datetime']['$lte'] = datetime.fromisoformat(end_date)
-        
-        appointments = list(db.appointments.find(query).sort('datetime', 1))
-        
-        # Convert ObjectId and datetime for JSON
         for appt in appointments:
-            appt['_id'] = str(appt['_id'])
-            appt['datetime'] = appt['datetime'].isoformat()
-            if 'requestId' in appt:
-                appt['requestId'] = str(appt['requestId'])
-            if 'createdAt' in appt:
-                appt['createdAt'] = appt['createdAt'].isoformat()
-            if 'updatedAt' in appt:
-                appt['updatedAt'] = appt['updatedAt'].isoformat()
+            event = Event()
+            
+            # Build detailed summary
+            customer_name = f"{appt['customer'].get('firstName', '')} {appt['customer'].get('lastName', '')}".strip()
+            device_info = f"{appt['device'].get('manufacturer', '')} {appt['device'].get('model', '')}".strip()
+            
+            event.add('summary', f"{appt['service_type']}: {customer_name}")
+            
+            # Build detailed description
+            description_parts = [
+                f"Customer: {customer_name}",
+                f"Phone: {appt['customer'].get('phone', 'N/A')}",
+                f"Email: {appt['customer'].get('email', 'N/A')}",
+                f"Device: {device_info}",
+                f"Service: {appt['service_type']}",
+                f"Status: {appt['status']}"
+            ]
+            
+            if appt['notes']:
+                description_parts.append(f"Notes: {appt['notes']}")
+            
+            event.add('description', '\n'.join(description_parts))
+            
+            # Set date/time
+            appt_date = appt['date']
+            if isinstance(appt_date, datetime):
+                event.add('dtstart', appt_date)
+                # Assume 30-minute slots by default
+                event.add('dtend', appt_date + timedelta(minutes=SLOT_DURATION_MINUTES))
+            
+            event.add('status', 'CONFIRMED')
+            event.add('transp', 'OPAQUE')  # Show as busy
+            event.add('uid', f"repair-{appt['id']}@repairshop.local")
+            
+            cal.add_component(event)
         
-        return jsonify({
-            'success': True,
-            'count': len(appointments),
-            'appointments': appointments
-        }), 200
+        return Response(
+            cal.to_ical(),
+            mimetype='text/calendar',
+            headers={
+                'Content-Disposition': 'attachment; filename=repair-shop-full.ics'
+            }
+        )
         
     except Exception as e:
-        logger.error(f"Error listing appointments: {str(e)}", exc_info=True)
+        logger.error(f"Error generating full calendar: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
             'error': str(e)
         }), 500
 
+
+@app.route("/slots", methods=['GET'])
+def slots_json():
+    """
+    Public endpoint showing busy/free slots without details - JSON format
+    """
+    try:
+        # Get date range (next 30 days by default)
+        days = int(request.args.get('days', 30))
+        start_date = datetime.now()
+        end_date = start_date + timedelta(days=days)
+        
+        # Get non-working blocks
+        non_working_blocks = get_non_working_blocks(start_date, end_date)
+        
+        # Get appointments (without details)
+        appointments = get_appointments(start_date, end_date)
+        
+        # Build response
+        busy_slots = []
+        
+        # Add non-working blocks
+        for block_start, block_end in non_working_blocks:
+            busy_slots.append({
+                'start': block_start.isoformat(),
+                'end': block_end.isoformat(),
+                'type': 'closed',
+                'reason': 'Non-working hours'
+            })
+        
+        # Add booked appointments (without customer details)
+        for appt in appointments:
+            appt_date = appt['date']
+            if isinstance(appt_date, datetime):
+                busy_slots.append({
+                    'start': appt_date.isoformat(),
+                    'end': (appt_date + timedelta(minutes=SLOT_DURATION_MINUTES)).isoformat(),
+                    'type': 'booked',
+                    'reason': 'Appointment scheduled'
+                })
+        
+        return jsonify({
+            'success': True,
+            'period': {
+                'start': start_date.isoformat(),
+                'end': end_date.isoformat()
+            },
+            'slot_duration_minutes': SLOT_DURATION_MINUTES,
+            'busy_slots': busy_slots,
+            'working_hours': {
+                day: {
+                    'start': hours[0].strftime('%H:%M') if hours else None,
+                    'end': hours[1].strftime('%H:%M') if hours else None
+                } if hours else None
+                for day, hours in WORKING_HOURS.items()
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error generating slots JSON: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route("/slots.ics", methods=['GET'])
+def slots_ics():
+    """
+    Public endpoint showing busy/free slots without details - iCalendar format
+    """
+    try:
+        # Create calendar
+        cal = Calendar()
+        cal.add('prodid', '-//Repair Shop Calendar//EN')
+        cal.add('version', '2.0')
+        cal.add('calscale', 'GREGORIAN')
+        cal.add('x-wr-calname', 'Repair Shop - Availability')
+        cal.add('x-wr-timezone', 'UTC')
+        cal.add('method', 'PUBLISH')
+        
+        # Get date range (next 90 days)
+        start_date = datetime.now()
+        end_date = start_date + timedelta(days=90)
+        
+        # Add non-working hour blocks
+        non_working_blocks = get_non_working_blocks(start_date, end_date)
+        for block_start, block_end in non_working_blocks:
+            event = Event()
+            event.add('summary', 'Unavailable')
+            event.add('dtstart', block_start)
+            event.add('dtend', block_end)
+            event.add('transp', 'OPAQUE')  # Show as busy
+            event.add('status', 'CONFIRMED')
+            event.add('class', 'PUBLIC')
+            
+            cal.add_component(event)
+        
+        # Add appointments without details
+        appointments = get_appointments(start_date, end_date)
+        
+        for appt in appointments:
+            event = Event()
+            event.add('summary', 'Busy')  # Generic title only
+            
+            # Set date/time
+            appt_date = appt['date']
+            if isinstance(appt_date, datetime):
+                event.add('dtstart', appt_date)
+                event.add('dtend', appt_date + timedelta(minutes=SLOT_DURATION_MINUTES))
+            
+            event.add('status', 'CONFIRMED')
+            event.add('transp', 'OPAQUE')  # Show as busy
+            event.add('class', 'PUBLIC')
+            event.add('uid', f"slot-{appt['id']}@repairshop.local")
+            
+            # No description, location, or attendee information
+            
+            cal.add_component(event)
+        
+        return Response(
+            cal.to_ical(),
+            mimetype='text/calendar',
+            headers={
+                'Content-Disposition': 'attachment; filename=repair-shop-slots.ics'
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating slots calendar: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+# ============================================================================
+# APPLICATION ENTRY POINT
+# ============================================================================
 
 if __name__ == "__main__":
     # Run the Flask development server
