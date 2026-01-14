@@ -80,7 +80,7 @@
         }
 
         .week-header {
-            font-size: 1.75rem;
+            font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 15px;
             color: #333;
@@ -331,7 +331,7 @@
         const translations = {
             en: {
                 title: 'Repair Calendar',
-                week: 'Week',
+                weekOf: 'Week of',
                 available: 'Available',
                 busy: 'Busy',
                 unavailable: 'Unavailable',
@@ -350,7 +350,7 @@
             },
             de: {
                 title: 'Reparatur Kalender',
-                week: 'Woche',
+                weekOf: 'Woche vom',
                 available: 'Verfügbar',
                 busy: 'Belegt',
                 unavailable: 'Nicht verfügbar',
@@ -497,6 +497,13 @@
             return date.toLocaleDateString(currentLang === 'de' ? 'de-DE' : 'en-US', options);
         }
 
+        function formatWeekHeader(weekNumber, date) {
+            const t = translations[currentLang];
+            const monthOptions = { month: 'long', year: 'numeric' };
+            const monthYear = date.toLocaleDateString(currentLang === 'de' ? 'de-DE' : 'en-US', monthOptions);
+            return `${t.week} ${weekNumber} • ${monthYear}`;
+        }
+
         function calculateDateRange(range) {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -564,11 +571,11 @@
             const { minHour, maxHour } = getWeekHourRange(data.working_hours);
             
             let html = '<div class="week-container">';
-            html += `<div class="week-header">${t.week} ${weekNumber} ${year}</div>`;
+            html += `<div class="week-header">${formatWeekHeader(weekNumber, currentWeekStart)}</div>`;
             html += '<div class="calendar-grid">';
             
             // Corner cell with week number
-            html += `<div class="calendar-header corner">${t.weekPrefix} ${weekNumber}</div>`;
+            html += `<div class="calendar-header corner">${t.weekPrefix} ${weekNumber}<br>${year}</div>`;
             
             // Day headers
             for (let i = 0; i < 7; i++) {
