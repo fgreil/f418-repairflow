@@ -665,17 +665,20 @@
 
         async function changeRange() {
             currentRange = document.getElementById('rangeSelector').value;
-            const dateRange = calculateDateRange(currentRange);
-            minDate = dateRange.start;
-            maxDate = dateRange.end;
             
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            currentWeekStart = getMonday(today);
+            const todayMonday = getMonday(today);
             
-            if (currentWeekStart < minDate) {
-                currentWeekStart = new Date(minDate);
-            }
+            // minDate is always today's week
+            minDate = todayMonday;
+            
+            // maxDate is the end of the selected range
+            const dateRange = calculateDateRange(currentRange);
+            maxDate = dateRange.end;
+            
+            // Always start at today's week when changing range
+            currentWeekStart = todayMonday;
             
             const data = await fetchWeekData(currentWeekStart);
             calendarData = data;
@@ -684,13 +687,18 @@
 
         async function loadCalendar() {
             try {
-                const dateRange = calculateDateRange(currentRange);
-                minDate = dateRange.start;
-                maxDate = dateRange.end;
-                
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                currentWeekStart = getMonday(today);
+                const todayMonday = getMonday(today);
+                
+                // minDate is always today's week
+                minDate = todayMonday;
+                
+                // maxDate is the end of the selected range
+                const dateRange = calculateDateRange(currentRange);
+                maxDate = dateRange.end;
+                
+                currentWeekStart = todayMonday;
                 
                 const data = await fetchWeekData(currentWeekStart);
                 calendarData = data;
