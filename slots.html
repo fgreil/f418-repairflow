@@ -32,8 +32,6 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #e0e0e0;
         }
 
         h1 {
@@ -145,7 +143,7 @@
 
         .controls {
             display: flex;
-            justify-content: flex-end;
+            justify-content: flex-start;
             align-items: center;
             margin-bottom: 20px;
         }
@@ -618,12 +616,17 @@
             const nextBtn = document.getElementById('nextBtn');
             const todayBtn = document.getElementById('todayBtn');
             
-            prevBtn.disabled = currentWeekStart <= todayMonday;
+            // Disable Previous if going back would be before minDate
+            const prevWeek = new Date(currentWeekStart);
+            prevWeek.setDate(prevWeek.getDate() - 7);
+            prevBtn.disabled = prevWeek < minDate;
             
+            // Disable Next if going forward would be after maxDate
             const nextWeek = new Date(currentWeekStart);
             nextWeek.setDate(nextWeek.getDate() + 7);
             nextBtn.disabled = nextWeek > maxDate;
             
+            // Disable Today if already on current week
             todayBtn.disabled = currentWeekStart.getTime() === todayMonday.getTime();
         }
 
