@@ -1103,33 +1103,39 @@
 
         // Load filter options from API
         async function loadFilterOptions() {
-            try {
-                // Load device types
-                const deviceTypesRes = await fetch(`${API_BASE}/options?filter=device_types`);
-                const deviceTypesData = await deviceTypesRes.json();
-                if (deviceTypesData.success) {
-                    filterOptions.deviceTypes = deviceTypesData.options;
-                    populateSelect('deviceTypeFilter', deviceTypesData.options);
-                }
+            const filterConfigs = [
+                { type: 'device_types', selectId: 'deviceTypeFilter', storeKey: 'deviceTypes', labelId: 'labelDeviceType' },
+                { type: 'brands', selectId: 'brandFilter', storeKey: 'brands', labelId: 'labelBrand' },
+                { type: 'cities', selectId: 'cityFilter', storeKey: 'cities', labelId: 'labelCity' }
+            ];
 
-                // Load brands
-                const brandsRes = await fetch(`${API_BASE}/options?filter=brands`);
-                const brandsData = await brandsRes.json();
-                if (brandsData.success) {
-                    filterOptions.brands = brandsData.options;
-                    populateSelect('brandFilter', brandsData.options);
+            for (const config of filterConfigs) {
+                try {
+                    const response = await fetch(`${API_BASE}/options?filter=${config.type}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.options && data.options.length > 0) {
+                        filterOptions[config.storeKey] = data.options;
+                        populateSelect(config.selectId, data.options);
+                        // Show the filter group
+                        document.getElementById(config.selectId).closest('.filter-group').style.display = 'block';
+                    } else {
+                        // Hide the filter group if no options available
+                        document.getElementById(config.selectId).closest('.filter-group').style.display = 'none';
+                        console.warn(`No options available for ${config.type}`);
+                    }
+                } catch (error) {
+                    // Hide the filter group on error
+                    document.getElementById(config.selectId).closest('.filter-group').style.display = 'none';
+                    console.error(`Error loading ${config.type}:`, error);
                 }
+            }
 
-                // Load cities
-                const citiesRes = await fetch(`${API_BASE}/options?filter=cities`);
-                const citiesData = await citiesRes.json();
-                if (citiesData.success) {
-                    filterOptions.cities = citiesData.options;
-                    populateSelect('cityFilter', citiesData.options);
-                }
-            } catch (error) {
-                showError(t('errorLoadingFilters'));
-                console.error('Error loading filter options:', error);
+            // Model filter is special - only show if we have device types or brands
+            if (filterOptions.deviceTypes.length > 0 || filterOptions.brands.length > 0) {
+                document.getElementById('modelFilter').closest('.filter-group').style.display = 'block';
+            } else {
+                document.getElementById('modelFilter').closest('.filter-group').style.display = 'none';
             }
         }
 
@@ -1267,6 +1273,24 @@
         async function performSearch() {
             const resultsContainer = document.getElementById('resultsContainer');
             
+            // Check if we have any search criteria
+            const hasSearchTerm = activeFilters.search.length > 0;
+            const hasFilters = activeFilters.deviceType || activeFilters.brand || 
+                               activeFilters.model || activeFilters.city;
+            
+            if (!hasSearchTerm && !hasFilters) {
+                // No search criteria - show empty state
+                resultsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <div class="empty-title">${t('emptyTitle')}</div>
+                        <div class="empty-text">${t('emptyText')}</div>
+                    </div>
+                `;
+                updateResultsInfo(0, 0);
+                return;
+            }
+            
             // Show loading
             resultsContainer.innerHTML = `
                 <div class="loading">
@@ -1292,7 +1316,17 @@
                     params.append('model', activeFilters.model);
                 }
                 if (activeFilters.city) {
-                    params.append('postal_code', activeFilters.city); // Using city for postal_code filter
+                    // Backend expects postal_code parameter, but we're filtering by city
+                    // We need to search in the city field, not postal code
+                    // Let's use a workaround by adding city to customer_search
+                    if (activeFilters.search) {
+                        // Already have customer_search, combine with city
+                        const combinedSearch = `${activeFilters.search} ${activeFilters.city}`;
+                        params.set('customer_search', combinedSearch);
+                    } else {
+                        // Use city as customer_search since it will match address.city
+                        params.append('customer_search', activeFilters.city);
+                    }
                 }
 
                 params.append('limit', '50');
@@ -1301,9 +1335,18 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    searchResults = data.results;
+                    // If we used city filter, need to filter results client-side
+                    let results = data.results;
+                    if (activeFilters.city) {
+                        results = results.filter(r => {
+                            const city = r.customer?.address?.city || '';
+                            return city.toLowerCase().includes(activeFilters.city.toLowerCase());
+                        });
+                    }
+                    
+                    searchResults = results;
                     renderResults();
-                    updateResultsInfo(data.count, data.total_found);
+                    updateResultsInfo(results.length, results.length);
                 } else {
                     throw new Error(data.error || 'Search failed');
                 }
