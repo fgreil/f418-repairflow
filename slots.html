@@ -553,7 +553,7 @@
             const startStr = weekStart.toISOString().split('T')[0];
             const endStr = weekEnd.toISOString().split('T')[0];
             
-            const response = await fetch(`https://repair.f418.eu/slots?start=${startStr}&end=${endStr}`);
+            const response = await fetch(`https://repair.f418.eu/slots?range=${currentRange}`);
             const data = await response.json();
             
             if (!data.success) {
@@ -611,7 +611,7 @@
                     if (minute === 0) {
                         html += `<div class="time-cell">${hour}:00</div>`;
                     } else {
-                        html += `<div class="time-cell"></div>`;
+                        html += `<div class="time-cell">&nbsp;</div>`;
                     }
                     for (let i = 0; i < 7; i++) {
                         const day = new Date(currentWeekStart);
