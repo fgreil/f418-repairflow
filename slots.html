@@ -82,6 +82,21 @@
             font-weight: 600;
             margin-bottom: 15px;
             color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .week-title {
+            flex: 1;
+        }
+
+        .week-range {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
         }
 
         .legend {
@@ -141,18 +156,11 @@
             font-size: 1rem;
         }
 
-        .controls {
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
         .range-selector {
-            padding: 8px 20px;
+            padding: 6px 16px;
             border: none;
             border-radius: 50px;
-            font-size: 14px;
+            font-size: 13px;
             background: white;
             cursor: pointer;
             color: #0d6efd;
@@ -297,16 +305,6 @@
         <div id="error" class="error" style="display: none;"></div>
         <div id="loading" class="loading">Loading calendar...</div>
         
-        <div id="controls" class="controls" style="display: none;">
-            <select class="range-selector" id="rangeSelector" onchange="changeRange()">
-                <option value="this_week">This Week</option>
-                <option value="next_week">Next Week</option>
-                <option value="this_month">This Month</option>
-                <option value="next_month">Next Month</option>
-                <option value="this_year">This Year</option>
-            </select>
-        </div>
-        
         <div id="calendar"></div>
         
         <div class="legend">
@@ -330,6 +328,7 @@
             en: {
                 title: 'Repair Calendar',
                 week: 'Week',
+                range: 'Range',
                 available: 'Available',
                 busy: 'Busy',
                 unavailable: 'Unavailable',
@@ -349,6 +348,7 @@
             de: {
                 title: 'Reparatur Kalender',
                 week: 'Woche',
+                range: 'Zeitraum',
                 available: 'Verfügbar',
                 busy: 'Belegt',
                 unavailable: 'Nicht verfügbar',
@@ -569,7 +569,19 @@
             const { minHour, maxHour } = getWeekHourRange(data.working_hours);
             
             let html = '<div class="week-container">';
-            html += `<div class="week-header">${formatWeekHeader(weekNumber, currentWeekStart)}</div>`;
+            html += '<div class="week-header">';
+            html += `<div class="week-title">${formatWeekHeader(weekNumber, currentWeekStart)}</div>`;
+            html += '<div class="week-range">';
+            html += `<span>${t.range}:</span>`;
+            html += '<select class="range-selector" id="rangeSelector" onchange="changeRange()">';
+            html += `<option value="this_week" ${currentRange === 'this_week' ? 'selected' : ''}>${t.rangeThisWeek}</option>`;
+            html += `<option value="next_week" ${currentRange === 'next_week' ? 'selected' : ''}>${t.rangeNextWeek}</option>`;
+            html += `<option value="this_month" ${currentRange === 'this_month' ? 'selected' : ''}>${t.rangeThisMonth}</option>`;
+            html += `<option value="next_month" ${currentRange === 'next_month' ? 'selected' : ''}>${t.rangeNextMonth}</option>`;
+            html += `<option value="this_year" ${currentRange === 'this_year' ? 'selected' : ''}>${t.rangeThisYear}</option>`;
+            html += '</select>';
+            html += '</div>';
+            html += '</div>';
             html += '<div class="calendar-grid">';
             
             // Corner cell with week number
@@ -704,7 +716,6 @@
                 calendarData = data;
                 
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('controls').style.display = 'flex';
                 await renderCalendar(data);
             } catch (error) {
                 document.getElementById('loading').style.display = 'none';
