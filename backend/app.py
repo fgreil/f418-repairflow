@@ -224,6 +224,11 @@ def list_routes():
             'description': 'Get a random BOFH excuse',
             'returns': 'Random excuse text'
         },
+        'GET /calendar': {
+            'description': 'Full calendar with appointment details as JSON (requires authentication)',
+            'authentication': 'HTTP Basic Auth required',
+            'returns': 'JSON with complete appointment information'
+        },
         'GET /calendar.ics': {
             'description': 'Full calendar with appointment details (requires authentication)',
             'authentication': 'HTTP Basic Auth required',
@@ -409,6 +414,84 @@ def handle_repair_request():
 # ============================================================================
 # ROUTE HANDLERS - CALENDAR ENDPOINTS
 # ============================================================================
+
+@app.route("/calendar", methods=['GET'])
+@require_calendar_auth
+def calendar_json():
+    """
+    Full calendar with all appointment details - JSON format (requires authentication)
+    """
+    try:
+        # Get date range (next 90 days)
+        start_date = datetime.now()
+        end_date = start_date + timedelta(days=90)
+        
+        # Get non-working blocks
+        non_working_blocks = get_non_working_blocks(start_date, end_date)
+        
+        # Get appointments with full details
+        appointments = get_appointments(start_date, end_date)
+        
+        # Build response
+        events = []
+        
+        # Add non-working blocks
+        for block_start, block_end in non_working_blocks:
+            reason = 'Non-working hours'
+            if is_holiday(block_start):
+                reason = 'Holiday - Shop Closed'
+            elif WORKING_HOURS.get(block_start.weekday()) is None:
+                reason = 'Weekend - Shop Closed'
+            
+            events.append({
+                'type': 'closed',
+                'summary': 'Closed',
+                'start': block_start.isoformat(),
+                'end': block_end.isoformat(),
+                'description': reason
+            })
+        
+        # Add appointments with full details
+        for appt in appointments:
+            customer_name = f"{appt['customer'].get('firstName', '')} {appt['customer'].get('lastName', '')}".strip()
+            device_info = f"{appt['device'].get('manufacturer', '')} {appt['device'].get('model', '')}".strip()
+            
+            appt_date = appt['date']
+            if isinstance(appt_date, datetime):
+                events.append({
+                    'type': 'appointment',
+                    'id': appt['id'],
+                    'summary': f"{appt['service_type']}: {customer_name}",
+                    'start': appt_date.isoformat(),
+                    'end': (appt_date + timedelta(minutes=SLOT_DURATION_MINUTES)).isoformat(),
+                    'customer': {
+                        'name': customer_name,
+                        'phone': appt['customer'].get('phone', 'N/A'),
+                        'email': appt['customer'].get('email', 'N/A')
+                    },
+                    'device': device_info,
+                    'service_type': appt['service_type'],
+                    'status': appt['status'],
+                    'notes': appt['notes']
+                })
+        
+        return jsonify({
+            'success': True,
+            'period': {
+                'start': start_date.isoformat(),
+                'end': end_date.isoformat()
+            },
+            'slot_duration_minutes': SLOT_DURATION_MINUTES,
+            'events': events
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error generating calendar JSON: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 
 @app.route("/calendar.ics", methods=['GET'])
 @require_calendar_auth
