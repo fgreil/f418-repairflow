@@ -79,6 +79,20 @@ def require_calendar_auth(f):
 # HELPER FUNCTIONS
 # ============================================================================
 
+def convert_decimal128(doc):
+    """
+    Recursively convert Decimal128 objects to floats in a document for JSON serialization
+    """
+    if isinstance(doc, dict):
+        return {key: convert_decimal128(value) for key, value in doc.items()}
+    elif isinstance(doc, list):
+        return [convert_decimal128(item) for item in doc]
+    elif isinstance(doc, Decimal128):
+        return float(doc.to_decimal())
+    else:
+        return doc
+
+
 def is_holiday(date_obj):
     """Check if a date is a configured holiday"""
     return (date_obj.month, date_obj.day) in FIXED_HOLIDAYS
@@ -236,7 +250,7 @@ def list_routes():
                 '/options?filter=models&brand=Samsung'
             ],
             'returns': 'List of available options (max 50, sorted)'
-        }
+        },
         'GET /request?id=<id>': {
             'description': 'Get details of a specific repair request',
             'parameters': 'id (required): MongoDB ObjectId of the repair request',
@@ -304,7 +318,7 @@ def get_excuse():
     except FileNotFoundError:
        return jsonify({"excuse": "Command not found"}), 500
     except Exception as e:
-       return jsonify({"excuse": "Error: {str(e)}"}), 500
+       return jsonify({"excuse": f"Error: {str(e)}"}), 500
 
 # ============================================================================
 # ROUTE HANDLERS - REPAIR REQUESTS
@@ -369,7 +383,7 @@ def list_repair_requests():
                 {'customer.firstName': regex_pattern},
                 {'customer.lastName': regex_pattern},
                 {'customer.email': regex_pattern},
-                {'customer.phone': regex_pattern},
+                {'customer.phoneNumber': regex_pattern},
                 {'customer.address.street': regex_pattern},
                 {'customer.address.postalCode': regex_pattern},
                 {'customer.address.city': regex_pattern},
@@ -389,6 +403,9 @@ def list_repair_requests():
         # Convert to response format
         results = []
         for doc in repair_requests:
+            # Convert Decimal128 to float
+            doc = convert_decimal128(doc)
+            
             doc['_id'] = str(doc['_id'])
             
             # Convert datetime objects to ISO format
@@ -529,6 +546,9 @@ def handle_repair_request():
                     'error': 'Repair request not found'
                 }), 404
             
+            # Convert Decimal128 to float
+            repair_request = convert_decimal128(repair_request)
+            
             # Convert ObjectId to string for JSON serialization
             repair_request['_id'] = str(repair_request['_id'])
             
@@ -565,10 +585,9 @@ def handle_repair_request():
             
             # Add optional fields if provided
             if 'repairs' in data:
-                if 'repairs' in data:
-                    for repair in data['repairs']:
-                        if 'quotedPrice' in repair:
-                           repair['quotedPrice'] = Decimal128(str(repair['quotedPrice']))
+                for repair in data['repairs']:
+                    if 'quotedPrice' in repair:
+                       repair['quotedPrice'] = Decimal128(str(repair['quotedPrice']))
                 repair_request['repairs'] = data['repairs']
             if 'appointment' in data:
                 # Convert date string to datetime object for MongoDB
@@ -627,7 +646,7 @@ def handle_repair_request():
                         'first_name': data['customer'].get('firstName', ''),
                         'last_name': data['customer'].get('lastName', ''),
                         'email': data['customer'].get('email', ''),
-                        'phone': data['customer'].get('phone', '')
+                        'phone': data['customer'].get('phoneNumber', '')
                     },
                     'device': {
                         'device_type': data['device'].get('type', ''),
