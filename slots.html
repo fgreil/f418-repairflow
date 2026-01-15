@@ -390,12 +390,15 @@
             document.getElementById('legend-unavailable').textContent = t.unavailable;
             document.getElementById('loading').textContent = t.loading;
             
+            // Update range selector if it exists (after calendar is rendered)
             const rangeSelector = document.getElementById('rangeSelector');
-            rangeSelector.options[0].text = t.rangeThisWeek;
-            rangeSelector.options[1].text = t.rangeNextWeek;
-            rangeSelector.options[2].text = t.rangeThisMonth;
-            rangeSelector.options[3].text = t.rangeNextMonth;
-            rangeSelector.options[4].text = t.rangeThisYear;
+            if (rangeSelector) {
+                rangeSelector.options[0].text = t.rangeThisWeek;
+                rangeSelector.options[1].text = t.rangeNextWeek;
+                rangeSelector.options[2].text = t.rangeThisMonth;
+                rangeSelector.options[3].text = t.rangeNextMonth;
+                rangeSelector.options[4].text = t.rangeThisYear;
+            }
             
             const errorDiv = document.getElementById('error');
             if (errorDiv.style.display !== 'none' && errorDiv.dataset.errorMsg) {
