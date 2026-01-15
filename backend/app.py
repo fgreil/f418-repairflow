@@ -1,7 +1,3 @@
-# ============================================================================
-# IMPORTS
-# ============================================================================
-
 from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
 from pymongo import MongoClient
@@ -12,23 +8,11 @@ import logging
 from icalendar import Calendar, Event
 from functools import wraps
 
-# ============================================================================
-# LOGGING CONFIGURATION
-# ============================================================================
-
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# ============================================================================
-# FLASK APP INITIALIZATION
-# ============================================================================
-
 app = Flask(__name__)
-
-# ============================================================================
-# CORS CONFIGURATION
-# ============================================================================
 
 # Enable CORS with explicit configuration
 CORS(app, resources={
@@ -44,7 +28,7 @@ CORS(app, resources={
 # ============================================================================
 
 # Appointment booking configuration
-SLOT_DURATION_MINUTES = 30  # to be used later for the endpoint /slot with method POST
+SLOT_DURATION_MINUTES = 30 
 WORKING_HOURS = {
     0: (time(9, 0), time(16, 0)),   # Monday
     1: (time(9, 0), time(16, 0)),   # Tuesday
@@ -65,10 +49,6 @@ FIXED_HOLIDAYS = [
 CALENDAR_USERNAME = "admin"
 CALENDAR_PASSWORD = "change_me_please"
 
-# ============================================================================
-# REQUEST LOGGING MIDDLEWARE
-# ============================================================================
-
 # Add request logging middleware
 @app.before_request
 def log_request():
@@ -77,17 +57,9 @@ def log_request():
     if request.method == 'POST':
         logger.info(f"Body: {request.get_data(as_text=True)}")
 
-# ============================================================================
-# DATABASE CONNECTION
-# ============================================================================
-
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
 db = client['repair_shop']  # Database name
-
-# ============================================================================
-# AUTHENTICATION
-# ============================================================================
 
 # Authentication decorator for protected calendar endpoint
 def require_calendar_auth(f):
@@ -191,6 +163,38 @@ def get_appointments(start_date=None, end_date=None):
                 'status': request_doc.get('status', 'pending'),
                 'notes': request_doc.get('additionalNotes', '')
             })
+    
+    return appointments
+
+
+def get_calendar_appointments(start_date=None, end_date=None):
+    """
+    Retrieve appointments from calendar collection
+    Returns list of appointment dictionaries
+    """
+    query = {}
+    
+    # Filter by date range if provided
+    if start_date or end_date:
+        date_filter = {}
+        if start_date:
+            # Convert to date string for comparison
+            date_filter['$gte'] = start_date.strftime('%Y-%m-%d')
+        if end_date:
+            date_filter['$lte'] = end_date.strftime('%Y-%m-%d')
+        query['date'] = date_filter
+    
+    appointments = []
+    for cal_entry in db.calendar.find(query):
+        appointments.append({
+            'id': cal_entry.get('customer', {}).get('request_id', str(cal_entry['_id'])),
+            'date': cal_entry.get('date'),
+            'timezone': cal_entry.get('timezone', 'UTC'),
+            'start_time': cal_entry.get('start_time'),
+            'end_time': cal_entry.get('end_time'),
+            'customer': cal_entry.get('customer', {}),
+            'device': cal_entry.get('device', {})
+        })
     
     return appointments
 
@@ -388,6 +392,54 @@ def handle_repair_request():
             result = db.repair_requests.insert_one(repair_request)
             logger.info(f"Successfully inserted with ID: {result.inserted_id}")
             
+            # If appointment is provided, also insert into calendar collection
+            if 'appointment' in data:
+                appointment_data = data['appointment']
+                
+                # Parse the appointment date and time
+                appt_date_str = appointment_data.get('date')  # YYYY-MM-DD
+                appt_time_str = appointment_data.get('timeSlot', '09:00')  # HH:MM
+                
+                # Calculate start and end times
+                if ':' in appt_time_str:
+                    start_hour, start_minute = map(int, appt_time_str.split(':'))
+                else:
+                    start_hour, start_minute = 9, 0
+                
+                end_hour = start_hour
+                end_minute = start_minute + SLOT_DURATION_MINUTES
+                if end_minute >= 60:
+                    end_hour += end_minute // 60
+                    end_minute = end_minute % 60
+                
+                start_time = f"{start_hour:02d}:{start_minute:02d}"
+                end_time = f"{end_hour:02d}:{end_minute:02d}"
+                
+                # Create calendar entry
+                calendar_entry = {
+                    'date': appt_date_str,
+                    'timezone': 'UTC',
+                    'start_time': start_time,
+                    'end_time': end_time,
+                    'customer': {
+                        'request_id': str(result.inserted_id),
+                        'booking_time': datetime.utcnow().isoformat(),
+                        'first_name': data['customer'].get('firstName', ''),
+                        'last_name': data['customer'].get('lastName', ''),
+                        'email': data['customer'].get('email', ''),
+                        'phone': data['customer'].get('phone', '')
+                    },
+                    'device': {
+                        'device_type': data['device'].get('type', ''),
+                        'brand': data['device'].get('manufacturer', ''),
+                        'model': data['device'].get('model', '')
+                    }
+                }
+                
+                logger.info(f"Inserting into calendar collection: {calendar_entry}")
+                db.calendar.insert_one(calendar_entry)
+                logger.info("Successfully inserted into calendar collection")
+            
             response_data = {
                 'success': True,
                 'id': str(result.inserted_id),
@@ -426,54 +478,23 @@ def calendar_json():
         start_date = datetime.now()
         end_date = start_date + timedelta(days=90)
         
-        # Get non-working blocks
-        non_working_blocks = get_non_working_blocks(start_date, end_date)
+        # Get appointments from calendar collection
+        appointments = get_calendar_appointments(start_date, end_date)
         
-        # Get appointments with full details
-        appointments = get_appointments(start_date, end_date)
-        
-        # Build response
+        # Build response with appointments only
         events = []
         
-        # Add non-working blocks
-        for block_start, block_end in non_working_blocks:
-            reason = 'Non-working hours'
-            if is_holiday(block_start):
-                reason = 'Holiday - Shop Closed'
-            elif WORKING_HOURS.get(block_start.weekday()) is None:
-                reason = 'Weekend - Shop Closed'
-            
-            events.append({
-                'type': 'closed',
-                'summary': 'Closed',
-                'start': block_start.isoformat(),
-                'end': block_end.isoformat(),
-                'description': reason
-            })
-        
-        # Add appointments with full details
         for appt in appointments:
-            customer_name = f"{appt['customer'].get('firstName', '')} {appt['customer'].get('lastName', '')}".strip()
-            device_info = f"{appt['device'].get('manufacturer', '')} {appt['device'].get('model', '')}".strip()
-            
-            appt_date = appt['date']
-            if isinstance(appt_date, datetime):
-                events.append({
-                    'type': 'appointment',
-                    'id': appt['id'],
-                    'summary': f"{appt['service_type']}: {customer_name}",
-                    'start': appt_date.isoformat(),
-                    'end': (appt_date + timedelta(minutes=SLOT_DURATION_MINUTES)).isoformat(),
-                    'customer': {
-                        'name': customer_name,
-                        'phone': appt['customer'].get('phone', 'N/A'),
-                        'email': appt['customer'].get('email', 'N/A')
-                    },
-                    'device': device_info,
-                    'service_type': appt['service_type'],
-                    'status': appt['status'],
-                    'notes': appt['notes']
-                })
+            events.append({
+                'type': 'appointment',
+                'id': appt['id'],
+                'date': appt['date'],
+                'timezone': appt['timezone'],
+                'start': appt['start_time'],
+                'end': appt['end_time'],
+                'customer': appt['customer'],
+                'device': appt['device']
+            })
         
         return jsonify({
             'success': True,
@@ -532,39 +553,50 @@ def calendar_full():
             
             cal.add_component(event)
         
-        # Add appointments with full details
-        appointments = get_appointments(start_date, end_date)
+        # Add appointments with full details from calendar collection
+        appointments = get_calendar_appointments(start_date, end_date)
         
         for appt in appointments:
             event = Event()
             
             # Build detailed summary
-            customer_name = f"{appt['customer'].get('firstName', '')} {appt['customer'].get('lastName', '')}".strip()
-            device_info = f"{appt['device'].get('manufacturer', '')} {appt['device'].get('model', '')}".strip()
+            customer = appt.get('customer', {})
+            device = appt.get('device', {})
+            customer_name = f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip()
+            device_info = f"{device.get('brand', '')} {device.get('model', '')}".strip()
             
-            event.add('summary', f"{appt['service_type']}: {customer_name}")
+            event.add('summary', f"Appointment: {customer_name}")
             
             # Build detailed description
             description_parts = [
                 f"Customer: {customer_name}",
-                f"Phone: {appt['customer'].get('phone', 'N/A')}",
-                f"Email: {appt['customer'].get('email', 'N/A')}",
+                f"Phone: {customer.get('phone', 'N/A')}",
+                f"Email: {customer.get('email', 'N/A')}",
                 f"Device: {device_info}",
-                f"Service: {appt['service_type']}",
-                f"Status: {appt['status']}"
+                f"Device Type: {device.get('device_type', 'N/A')}"
             ]
-            
-            if appt['notes']:
-                description_parts.append(f"Notes: {appt['notes']}")
             
             event.add('description', '\n'.join(description_parts))
             
-            # Set date/time
-            appt_date = appt['date']
-            if isinstance(appt_date, datetime):
-                event.add('dtstart', appt_date)
-                # Assume 30-minute slots by default
-                event.add('dtend', appt_date + timedelta(minutes=SLOT_DURATION_MINUTES))
+            # Set date/time - combine date string with time string
+            appt_date_str = appt.get('date')  # YYYY-MM-DD
+            start_time_str = appt.get('start_time')  # HH:MM
+            end_time_str = appt.get('end_time')  # HH:MM
+            
+            if appt_date_str and start_time_str:
+                # Parse date and time
+                appt_date = datetime.strptime(appt_date_str, '%Y-%m-%d').date()
+                start_hour, start_minute = map(int, start_time_str.split(':'))
+                start_datetime = datetime.combine(appt_date, time(start_hour, start_minute))
+                
+                event.add('dtstart', start_datetime)
+                
+                if end_time_str:
+                    end_hour, end_minute = map(int, end_time_str.split(':'))
+                    end_datetime = datetime.combine(appt_date, time(end_hour, end_minute))
+                    event.add('dtend', end_datetime)
+                else:
+                    event.add('dtend', start_datetime + timedelta(minutes=SLOT_DURATION_MINUTES))
             
             event.add('status', 'CONFIRMED')
             event.add('transp', 'OPAQUE')  # Show as busy
@@ -641,8 +673,8 @@ def slots_json():
         # Get non-working blocks
         non_working_blocks = get_non_working_blocks(start_date, end_date)
         
-        # Get appointments (without details)
-        appointments = get_appointments(start_date, end_date)
+        # Get appointments from calendar collection (without customer details)
+        appointments = get_calendar_appointments(start_date, end_date)
         
         # Build response
         busy_slots = []
@@ -658,11 +690,25 @@ def slots_json():
         
         # Add booked appointments (without customer details)
         for appt in appointments:
-            appt_date = appt['date']
-            if isinstance(appt_date, datetime):
+            appt_date_str = appt.get('date')  # YYYY-MM-DD
+            start_time_str = appt.get('start_time')  # HH:MM
+            end_time_str = appt.get('end_time')  # HH:MM
+            
+            if appt_date_str and start_time_str:
+                # Parse date and time to create ISO format datetime
+                appt_date = datetime.strptime(appt_date_str, '%Y-%m-%d').date()
+                start_hour, start_minute = map(int, start_time_str.split(':'))
+                start_datetime = datetime.combine(appt_date, time(start_hour, start_minute))
+                
+                if end_time_str:
+                    end_hour, end_minute = map(int, end_time_str.split(':'))
+                    end_datetime = datetime.combine(appt_date, time(end_hour, end_minute))
+                else:
+                    end_datetime = start_datetime + timedelta(minutes=SLOT_DURATION_MINUTES)
+                
                 busy_slots.append({
-                    'start': appt_date.isoformat(),
-                    'end': (appt_date + timedelta(minutes=SLOT_DURATION_MINUTES)).isoformat(),
+                    'start': start_datetime.isoformat(),
+                    'end': end_datetime.isoformat(),
                     'type': 'booked',
                     'reason': 'Appointment scheduled'
                 })
@@ -725,18 +771,32 @@ def slots_ics():
             
             cal.add_component(event)
         
-        # Add appointments without details
-        appointments = get_appointments(start_date, end_date)
+        # Add appointments without details from calendar collection
+        appointments = get_calendar_appointments(start_date, end_date)
         
         for appt in appointments:
             event = Event()
             event.add('summary', 'Busy')  # Generic title only
             
-            # Set date/time
-            appt_date = appt['date']
-            if isinstance(appt_date, datetime):
-                event.add('dtstart', appt_date)
-                event.add('dtend', appt_date + timedelta(minutes=SLOT_DURATION_MINUTES))
+            # Set date/time - combine date string with time string
+            appt_date_str = appt.get('date')  # YYYY-MM-DD
+            start_time_str = appt.get('start_time')  # HH:MM
+            end_time_str = appt.get('end_time')  # HH:MM
+            
+            if appt_date_str and start_time_str:
+                # Parse date and time
+                appt_date = datetime.strptime(appt_date_str, '%Y-%m-%d').date()
+                start_hour, start_minute = map(int, start_time_str.split(':'))
+                start_datetime = datetime.combine(appt_date, time(start_hour, start_minute))
+                
+                event.add('dtstart', start_datetime)
+                
+                if end_time_str:
+                    end_hour, end_minute = map(int, end_time_str.split(':'))
+                    end_datetime = datetime.combine(appt_date, time(end_hour, end_minute))
+                    event.add('dtend', end_datetime)
+                else:
+                    event.add('dtend', start_datetime + timedelta(minutes=SLOT_DURATION_MINUTES))
             
             event.add('status', 'CONFIRMED')
             event.add('transp', 'OPAQUE')  # Show as busy
