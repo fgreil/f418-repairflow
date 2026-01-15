@@ -229,7 +229,7 @@
 
         .slot-cell {
             background: white;
-            min-height: 28px;
+            min-height: 20px;
         }
 
         .slot-cell.available {
@@ -431,11 +431,11 @@
             return minHour <= maxHour ? { minHour, maxHour } : { minHour: 8, maxHour: 20 };
         }
 
-        function getSlotStatus(date, hour, busySlots, workingHours) {
+        function getSlotStatus(date, hour, minute, busySlots, workingHours) {
             const slotStart = new Date(date);
-            slotStart.setHours(hour, 0, 0, 0);
+            slotStart.setHours(hour, minute, 0, 0);
             const slotEnd = new Date(slotStart);
-            slotEnd.setHours(hour + 1, 0, 0, 0);
+            slotEnd.setMinutes(minute + 30);
 
             // Get day of week (0 = Monday, 6 = Sunday)
             const dayOfWeek = (date.getDay() + 6) % 7;
@@ -447,11 +447,14 @@
             }
             
             // Parse working hours for this day
-            const workStart = parseInt(dayHours.start.split(':')[0]);
-            const workEnd = parseInt(dayHours.end.split(':')[0]);
+            const [workStartHour, workStartMin] = dayHours.start.split(':').map(Number);
+            const [workEndHour, workEndMin] = dayHours.end.split(':').map(Number);
+            const workStartMinutes = workStartHour * 60 + workStartMin;
+            const workEndMinutes = workEndHour * 60 + workEndMin;
+            const slotMinutes = hour * 60 + minute;
             
-            // Check if hour is outside working hours
-            if (hour < workStart || hour >= workEnd) {
+            // Check if slot is outside working hours
+            if (slotMinutes < workStartMinutes || slotMinutes >= workEndMinutes) {
                 return 'unavailable';
             }
             
@@ -462,7 +465,7 @@
                 const slotStartTime = parseISODate(slot.start);
                 const slotEndTime = parseISODate(slot.end);
                 
-                // Check if this hour overlaps with the booked appointment
+                // Check if this 30-minute slot overlaps with the booked appointment
                 if (slotStartTime < slotEnd && slotEndTime > slotStart) {
                     return 'busy';
                 }
@@ -598,14 +601,16 @@
                 html += `<div class="calendar-header${isToday ? ' current-day' : ''}">${t.days[i]}<br>${day.getDate()}</div>`;
             }
 
-            // Time slots
+            // Time slots - now with 30-minute granularity
             for (let hour = minHour; hour <= maxHour; hour++) {
-                html += `<div class="time-cell">${hour}:00</div>`;
-                for (let i = 0; i < 7; i++) {
-                    const day = new Date(currentWeekStart);
-                    day.setDate(day.getDate() + i);
-                    const status = getSlotStatus(day, hour, data.busy_slots, data.working_hours);
-                    html += `<div class="slot-cell ${status}"></div>`;
+                for (let minute = 0; minute < 60; minute += 30) {
+                    html += `<div class="time-cell">${hour}:${minute.toString().padStart(2, '0')}</div>`;
+                    for (let i = 0; i < 7; i++) {
+                        const day = new Date(currentWeekStart);
+                        day.setDate(day.getDate() + i);
+                        const status = getSlotStatus(day, hour, minute, data.busy_slots, data.working_hours);
+                        html += `<div class="slot-cell ${status}"></div>`;
+                    }
                 }
             }
 
