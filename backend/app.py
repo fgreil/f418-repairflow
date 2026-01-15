@@ -210,9 +210,33 @@ def list_routes():
             'description': 'API documentation (this page)'
         },
         'GET /requests': {
-            'description': 'List all repair request IDs',
-            'returns': 'Array of all repair request IDs'
+            'description': 'List and search repair requests with filtering',
+            'parameters': {
+                'start_date': 'Start date (YYYY-MM-DD, default: today)',
+                'end_date': 'End date (YYYY-MM-DD, default: start_date + 90 days)',
+                'device_type': 'Filter by device type',
+                'brand': 'Filter by manufacturer/brand',
+                'model': 'Filter by device model',
+                'postal_code': 'Filter by customer postal code',
+                'customer_search': 'Search across all customer fields (name, email, phone, address)',
+                'limit': 'Max results (default: 10, max: 50)'
+            },
+            'returns': 'Array of matching repair requests with metadata'
         },
+        'GET /options': {
+            'description': 'Get available filter options',
+            'parameters': {
+                'filter': 'Required: device_types, brands, models, postal_codes, cities',
+                'device_type': 'For models filter: limit to specific device type',
+                'brand': 'For models filter: limit to specific brand'
+            },
+            'examples': [
+                '/options?filter=device_types',
+                '/options?filter=models&device_type=smartphone',
+                '/options?filter=models&brand=Samsung'
+            ],
+            'returns': 'List of available options (max 50, sorted)'
+        }
         'GET /request?id=<id>': {
             'description': 'Get details of a specific repair request',
             'parameters': 'id (required): MongoDB ObjectId of the repair request',
@@ -289,22 +313,198 @@ def get_excuse():
 @app.route("/requests", methods=['GET'])
 def list_repair_requests():
     try:
-        # Get all repair requests but only return their IDs
-        repair_requests = db.repair_requests.find({}, {'_id': 1})
-        ids = [str(doc['_id']) for doc in repair_requests]
+        import time
+        start_time = time.time()
+        
+        # Build query filter
+        query = {}
+        
+        # (1) Filter by request date range
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        if start_date or end_date:
+            date_filter = {}
+            if start_date:
+                date_filter['$gte'] = datetime.strptime(start_date, '%Y-%m-%d')
+            else:
+                # Default to today if not provided
+                date_filter['$gte'] = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            
+            if end_date:
+                date_filter['$lte'] = datetime.strptime(end_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+            else:
+                # Default to 90 days from start
+                start = date_filter.get('$gte', datetime.now())
+                date_filter['$lte'] = start + timedelta(days=90)
+            
+            query['submittedAt'] = date_filter
+        
+        # (2) Filter by device type
+        device_type = request.args.get('device_type')
+        if device_type:
+            query['device.type'] = device_type
+        
+        # (3) Filter by brand (manufacturer)
+        brand = request.args.get('brand')
+        if brand:
+            query['device.manufacturer'] = brand
+        
+        # (4) Filter by model
+        model = request.args.get('model')
+        if model:
+            query['device.model'] = model
+        
+        # (5) Search by postal code
+        postal_code = request.args.get('postal_code')
+        if postal_code:
+            query['customer.address.postalCode'] = postal_code
+        
+        # (6) Search by customer (across multiple fields)
+        customer_search = request.args.get('customer_search')
+        if customer_search:
+            # Create regex pattern for case-insensitive search
+            regex_pattern = {'$regex': customer_search, '$options': 'i'}
+            query['$or'] = [
+                {'customer.firstName': regex_pattern},
+                {'customer.lastName': regex_pattern},
+                {'customer.email': regex_pattern},
+                {'customer.phone': regex_pattern},
+                {'customer.address.street': regex_pattern},
+                {'customer.address.postalCode': regex_pattern},
+                {'customer.address.city': regex_pattern},
+                {'customer.address.houseNumber': regex_pattern}
+            ]
+        
+        # Get limit parameter (default 10, max 50)
+        limit = request.args.get('limit', '10')
+        try:
+            limit = min(int(limit), 50)  # Cap at 50
+        except ValueError:
+            limit = 10
+        
+        # Execute query
+        repair_requests = list(db.repair_requests.find(query).limit(limit))
+        
+        # Convert to response format
+        results = []
+        for doc in repair_requests:
+            doc['_id'] = str(doc['_id'])
+            
+            # Convert datetime objects to ISO format
+            if 'submittedAt' in doc:
+                doc['submittedAt'] = doc['submittedAt'].isoformat()
+            if 'updatedAt' in doc:
+                doc['updatedAt'] = doc['updatedAt'].isoformat()
+            if 'appointment' in doc and 'date' in doc['appointment']:
+                if isinstance(doc['appointment']['date'], datetime):
+                    doc['appointment']['date'] = doc['appointment']['date'].strftime('%Y-%m-%d')
+            
+            results.append(doc)
+        
+        # Calculate search time
+        search_time = time.time() - start_time
         
         return jsonify({
             'success': True,
-            'count': len(ids),
-            'ids': ids
+            'count': len(results),
+            'total_found': db.repair_requests.count_documents(query),
+            'limit': limit,
+            'search_time_ms': round(search_time * 1000, 2),
+            'results': results
         }), 200
         
     except Exception as e:
+        logger.error(f"Error in list_repair_requests: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
             'error': str(e)
         }), 500
 
+@app.route("/options", methods=['GET'])
+def get_filter_options():
+    """
+    Get available filter options for search
+    Examples:
+    - /options?filter=device_types
+    - /options?filter=brands
+    - /options?filter=models&device_type=smartphone
+    - /options?filter=models&brand=Samsung
+    """
+    try:
+        import time
+        start_time = time.time()
+        
+        filter_type = request.args.get('filter')
+        
+        if not filter_type:
+            return jsonify({
+                'success': False,
+                'error': 'Missing filter parameter',
+                'available_filters': ['device_types', 'brands', 'models', 'postal_codes', 'cities']
+            }), 400
+        
+        results = []
+        
+        if filter_type == 'device_types':
+            # Get all unique device types
+            results = db.repair_requests.distinct('device.type')
+            
+        elif filter_type == 'brands':
+            # Get all unique brands/manufacturers
+            results = db.repair_requests.distinct('device.manufacturer')
+            
+        elif filter_type == 'models':
+            # Get models, optionally filtered by device_type or brand
+            query = {}
+            device_type = request.args.get('device_type')
+            brand = request.args.get('brand')
+            
+            if device_type:
+                query['device.type'] = device_type
+            if brand:
+                query['device.manufacturer'] = brand
+            
+            if query:
+                # Use aggregation to get distinct models with filter
+                results = db.repair_requests.find(query).distinct('device.model')
+            else:
+                results = db.repair_requests.distinct('device.model')
+        
+        elif filter_type == 'postal_codes':
+            # Get all unique postal codes
+            results = db.repair_requests.distinct('customer.address.postalCode')
+            
+        elif filter_type == 'cities':
+            # Get all unique cities
+            results = db.repair_requests.distinct('customer.address.city')
+            
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Invalid filter type: {filter_type}',
+                'available_filters': ['device_types', 'brands', 'models', 'postal_codes', 'cities']
+            }), 400
+        
+        # Filter out None values and limit to 50 results
+        results = [r for r in results if r is not None][:50]
+        
+        search_time = time.time() - start_time
+        
+        return jsonify({
+            'success': True,
+            'filter': filter_type,
+            'count': len(results),
+            'search_time_ms': round(search_time * 1000, 2),
+            'options': sorted(results)  # Sort alphabetically for better UX
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error in get_filter_options: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route("/request", methods=['GET', 'POST'])
 def handle_repair_request():
