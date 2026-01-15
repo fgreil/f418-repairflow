@@ -432,10 +432,13 @@
         }
 
         function getSlotStatus(date, hour, minute, busySlots, workingHours) {
-            const slotStart = new Date(date);
-            slotStart.setHours(hour, minute, 0, 0);
-            const slotEnd = new Date(slotStart);
-            slotEnd.setMinutes(minute + 30);
+            // Create slot time using local date/time
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const day = date.getDate();
+            
+            const slotStart = new Date(year, month, day, hour, minute, 0, 0);
+            const slotEnd = new Date(year, month, day, hour, minute + 30, 0, 0);
 
             // Get day of week (0 = Monday, 6 = Sunday)
             const dayOfWeek = (date.getDay() + 6) % 7;
@@ -462,8 +465,8 @@
             for (let slot of busySlots) {
                 if (slot.type !== 'booked') continue;
                 
-                const slotStartTime = parseISODate(slot.start);
-                const slotEndTime = parseISODate(slot.end);
+                const slotStartTime = new Date(slot.start);
+                const slotEndTime = new Date(slot.end);
                 
                 // Check if this 30-minute slot overlaps with the booked appointment
                 if (slotStartTime < slotEnd && slotEndTime > slotStart) {
@@ -604,7 +607,12 @@
             // Time slots - now with 30-minute granularity
             for (let hour = minHour; hour <= maxHour; hour++) {
                 for (let minute = 0; minute < 60; minute += 30) {
-                    html += `<div class="time-cell">${hour}:${minute.toString().padStart(2, '0')}</div>`;
+                    // Only show time label for full hours (:00), empty cell for :30
+                    if (minute === 0) {
+                        html += `<div class="time-cell">${hour}:00</div>`;
+                    } else {
+                        html += `<div class="time-cell"></div>`;
+                    }
                     for (let i = 0; i < 7; i++) {
                         const day = new Date(currentWeekStart);
                         day.setDate(day.getDate() + i);
