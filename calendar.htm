@@ -532,6 +532,7 @@
         let selectedAppointment = null;
         let credentials = null;
         let appointmentMap = new Map(); // Maps slot key to appointment data
+        let workingHours = {}; // Working hours from slots endpoint
 
         function setLanguage(lang) {
             currentLang = lang;
@@ -577,29 +578,28 @@
             return new Date(isoStr);
         }
 
-        function getWeekHourRange(events) {
+        function getWeekHourRange(workingHoursData) {
             let minHour = 23;
             let maxHour = 0;
             
-            // Check all events to find the time range
-            for (let event of events) {
-                if (event.start && event.end) {
-                    const startTime = event.start.split(':');
-                    const endTime = event.end.split(':');
-                    
-                    const startHour = parseInt(startTime[0]);
-                    const endHour = parseInt(endTime[0]);
+            // Check working hours for each day of the week (0=Monday, 6=Sunday)
+            for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+                const dayHours = workingHoursData[dayOfWeek];
+                
+                if (dayHours) {
+                    const startHour = parseInt(dayHours.start.split(':')[0]);
+                    const endHour = parseInt(dayHours.end.split(':')[0]);
                     
                     minHour = Math.min(minHour, startHour);
                     maxHour = Math.max(maxHour, endHour);
                 }
             }
             
-            // Fallback to business hours if no events
-            return minHour <= maxHour ? { minHour, maxHour } : { minHour: 9, maxHour: 17 };
+            // Return range, fallback if no working hours found
+            return minHour <= maxHour ? { minHour, maxHour } : { minHour: 8, maxHour: 20 };
         }
 
-        function getSlotStatus(date, hour, minute, events) {
+        function getSlotStatus(date, hour, minute, events, busySlots) {
             const year = date.getFullYear();
             const month = date.getMonth();
             const day = date.getDate();
@@ -607,36 +607,64 @@
             const slotStart = new Date(year, month, day, hour, minute, 0, 0);
             const slotEnd = new Date(year, month, day, hour, minute + 30, 0, 0);
 
-            // Check if there's an appointment in this slot
-            for (let event of events) {
-                if (event.type === 'appointment') {
-                    // Parse event date and time
-                    const eventDate = new Date(event.date + 'T00:00:00');
-                    const [startHour, startMin] = event.start.split(':').map(Number);
-                    const [endHour, endMin] = event.end.split(':').map(Number);
+            // Get day of week (0 = Monday, 6 = Sunday)
+            const dayOfWeek = (date.getDay() + 6) % 7;
+            const dayHours = workingHours[dayOfWeek];
+            
+            // If no working hours for this day, it's unavailable
+            if (!dayHours) {
+                return 'unavailable';
+            }
+            
+            // Parse working hours for this day
+            const [workStartHour, workStartMin] = dayHours.start.split(':').map(Number);
+            const [workEndHour, workEndMin] = dayHours.end.split(':').map(Number);
+            const workStartMinutes = workStartHour * 60 + workStartMin;
+            const workEndMinutes = workEndHour * 60 + workEndMin;
+            const slotMinutes = hour * 60 + minute;
+            
+            // Check if slot is outside working hours
+            if (slotMinutes < workStartMinutes || slotMinutes >= workEndMinutes) {
+                return 'unavailable';
+            }
+
+            // Check if there's a booked appointment in this slot from busySlots
+            if (busySlots) {
+                for (let slot of busySlots) {
+                    if (slot.type !== 'booked') continue;
                     
-                    const eventStart = new Date(eventDate);
-                    eventStart.setHours(startHour, startMin, 0, 0);
+                    const slotStartTime = new Date(slot.start);
+                    const slotEndTime = new Date(slot.end);
                     
-                    const eventEnd = new Date(eventDate);
-                    eventEnd.setHours(endHour, endMin, 0, 0);
-                    
-                    // Check if this 30-minute slot overlaps with the appointment
-                    if (eventStart < slotEnd && eventEnd > slotStart &&
-                        eventDate.getDate() === day &&
-                        eventDate.getMonth() === month &&
-                        eventDate.getFullYear() === year) {
-                        
-                        // Store appointment data in map
-                        const slotKey = `${year}-${month}-${day}-${hour}-${minute}`;
-                        appointmentMap.set(slotKey, event);
-                        
+                    // Check if this 30-minute slot overlaps with the booked appointment
+                    if (slotStartTime < slotEnd && slotEndTime > slotStart) {
+                        // Find matching event for this slot to get customer info
+                        for (let event of events) {
+                            if (event.type === 'appointment') {
+                                const eventDate = new Date(event.date + 'T00:00:00');
+                                const [startHour, startMin] = event.start.split(':').map(Number);
+                                const [endHour, endMin] = event.end.split(':').map(Number);
+                                
+                                const eventStart = new Date(eventDate);
+                                eventStart.setHours(startHour, startMin, 0, 0);
+                                
+                                const eventEnd = new Date(eventDate);
+                                eventEnd.setHours(endHour, endMin, 0, 0);
+                                
+                                // Check if this event matches the busy slot
+                                if (Math.abs(eventStart - slotStartTime) < 60000) { // Within 1 minute
+                                    const slotKey = `${year}-${month}-${day}-${hour}-${minute}`;
+                                    appointmentMap.set(slotKey, event);
+                                    break;
+                                }
+                            }
+                        }
                         return 'busy';
                     }
                 }
             }
             
-            // Default to available (actual availability would come from working hours)
+            // During working hours with no appointment = available
             return 'available';
         }
 
@@ -754,28 +782,46 @@
             weekEnd.setDate(weekEnd.getDate() + 6);
             weekEnd.setHours(23, 59, 59, 999);
             
-            // Use /calendar endpoint with authentication
+            // Fetch both calendar (with auth) and slots (public) data
             const headers = {};
             if (credentials) {
                 const auth = btoa(`${credentials.username}:${credentials.password}`);
                 headers['Authorization'] = `Basic ${auth}`;
             }
             
-            const response = await fetch('https://repair.f418.eu/calendar', { headers });
+            // Fetch calendar data with appointment details
+            const calendarResponse = await fetch('https://repair.f418.eu/calendar', { headers });
             
-            if (response.status === 401) {
+            if (calendarResponse.status === 401) {
                 // Show auth prompt
                 document.getElementById('authPrompt').style.display = 'block';
                 throw new Error('Authentication required');
             }
             
-            const data = await response.json();
+            const calendarData = await calendarResponse.json();
             
-            if (!data.success) {
+            if (!calendarData.success) {
                 throw new Error('Failed to fetch calendar data');
             }
             
-            return data;
+            // Fetch slots data for working hours and busy slots
+            const slotsResponse = await fetch('https://repair.f418.eu/slots?range=this_year');
+            const slotsData = await slotsResponse.json();
+            
+            if (!slotsData.success) {
+                throw new Error('Failed to fetch slots data');
+            }
+            
+            // Store working hours globally
+            workingHours = slotsData.working_hours;
+            
+            // Combine both datasets
+            return {
+                events: calendarData.events || [],
+                busy_slots: slotsData.busy_slots || [],
+                working_hours: slotsData.working_hours,
+                slot_duration_minutes: slotsData.slot_duration_minutes
+            };
         }
 
         async function renderCalendar(data) {
@@ -790,7 +836,7 @@
             
             const weekNumber = getWeekNumber(currentWeekStart);
             const year = currentWeekStart.getFullYear();
-            const { minHour, maxHour } = getWeekHourRange(data.events || []);
+            const { minHour, maxHour } = getWeekHourRange(data.working_hours || {});
             
             // Clear appointment map
             appointmentMap.clear();
@@ -824,7 +870,7 @@
                     for (let i = 0; i < 7; i++) {
                         const day = new Date(currentWeekStart);
                         day.setDate(day.getDate() + i);
-                        const status = getSlotStatus(day, hour, minute, data.events || []);
+                        const status = getSlotStatus(day, hour, minute, data.events || [], data.busy_slots || []);
                         const slotKey = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}-${hour}-${minute}`;
                         
                         if (status === 'busy') {
