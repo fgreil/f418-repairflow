@@ -701,10 +701,12 @@
         }
 
         async function loadCalendar() {
+            console.log('loadCalendar started');
             try {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 const todayMonday = getMonday(today);
+                console.log('Today Monday:', todayMonday);
                 
                 // minDate is always today's week
                 minDate = todayMonday;
@@ -712,15 +714,21 @@
                 // maxDate is the end of the selected range
                 const dateRange = calculateDateRange(currentRange);
                 maxDate = dateRange.end;
+                console.log('Date range:', minDate, 'to', maxDate);
                 
                 currentWeekStart = todayMonday;
                 
+                console.log('Fetching week data...');
                 const data = await fetchWeekData(currentWeekStart);
+                console.log('Data received:', data);
                 calendarData = data;
                 
                 document.getElementById('loading').style.display = 'none';
+                console.log('Rendering calendar...');
                 await renderCalendar(data);
+                console.log('Calendar rendered');
             } catch (error) {
+                console.error('Error in loadCalendar:', error);
                 document.getElementById('loading').style.display = 'none';
                 const errorDiv = document.getElementById('error');
                 errorDiv.style.display = 'block';
@@ -729,7 +737,6 @@
             }
         }
 
-        updateTexts();
         loadCalendar();
     </script>
 </body>
