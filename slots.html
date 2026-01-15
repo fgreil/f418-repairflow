@@ -332,7 +332,6 @@
             en: {
                 title: 'Repair Calendar',
                 week: 'Week',
-                weekOf: 'Week of',
                 available: 'Available',
                 busy: 'Busy',
                 unavailable: 'Unavailable',
@@ -352,7 +351,6 @@
             de: {
                 title: 'Reparatur Kalender',
                 week: 'Woche',
-                weekOf: 'Woche vom',
                 available: 'Verfügbar',
                 busy: 'Belegt',
                 unavailable: 'Nicht verfügbar',
@@ -503,7 +501,7 @@
             const t = translations[currentLang];
             const monthOptions = { month: 'long', year: 'numeric' };
             const monthYear = date.toLocaleDateString(currentLang === 'de' ? 'de-DE' : 'en-US', monthOptions);
-            return `${t.week} ${weekNumber} • ${monthYear}`;
+            return `${week} ${weekNumber} • ${monthYear}`;
         }
 
         function calculateDateRange(range) {
