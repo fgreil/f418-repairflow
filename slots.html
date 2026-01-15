@@ -501,7 +501,7 @@
             const t = translations[currentLang];
             const monthOptions = { month: 'long', year: 'numeric' };
             const monthYear = date.toLocaleDateString(currentLang === 'de' ? 'de-DE' : 'en-US', monthOptions);
-            return `${week} ${weekNumber} • ${monthYear}`;
+            return `${t.week} ${weekNumber} • ${monthYear}`;
         }
 
         function calculateDateRange(range) {
