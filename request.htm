@@ -1732,7 +1732,7 @@
                 let brandName, modelName;
 
                 if (!device.hasModels) {
-                    brandName = null;
+                    brandName = '';
                     modelName = state.customText;
                 } else {
                     brandName = state.brand === 'other' ? state.customText : state.brand;
